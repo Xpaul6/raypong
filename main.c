@@ -1,5 +1,4 @@
 #include "include/raylib.h"
-#include <time.h>
 #include <stdbool.h>
 
 typedef struct Object {
@@ -51,7 +50,7 @@ int main() {
         {windowWidth / 2 + ballSize / 2, windowHeight / 2 + ballSize / 2, ballSize, ballSize},
         RAYWHITE
     };
-    ballDirection = time(NULL) % 2 == 0 ? 2 : 1; 
+    ballDirection = GetRandomValue(1, 4); 
 
     // Main game loop
     while(!WindowShouldClose()) {
@@ -158,8 +157,8 @@ int main() {
         }
         if (isGoal) {
             ball.rec.x = windowWidth / 2 + ballSize / 2;
-            ball.rec.y = windowHeight / 2 + ballSize / 2;
-            ballDirection = time(NULL) % 2 == 0 ? 2 : 1; 
+            ball.rec.y = GetRandomValue(0, windowHeight - ballSize); 
+            ballDirection = GetRandomValue(1, 4); 
             ballSpeed = ballSpeedInit;
             isGoal = false;
         }
