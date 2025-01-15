@@ -33,7 +33,7 @@ float ballSpeed = ballSpeedInit;
 int main() {
 
     // Window init
-    InitWindow(windowWidth, windowHeight, "pong");
+    InitWindow(windowWidth, windowHeight, "raypong");
     SetTargetFPS(60);
 
     // Objects init
