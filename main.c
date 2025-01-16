@@ -37,12 +37,12 @@ int main() {
 
     // Objects init
     Object racketLeft = {
-        {0, windowHeight / 2 + racketHeigth / 2, racketWidth, racketHeigth},
+        {0, windowHeight / 2 - racketHeigth / 2, racketWidth, racketHeigth},
         RAYWHITE
     };
 
     Object racketRight = {
-        {windowWidth - racketWidth, windowHeight / 2 + racketHeigth / 2, racketWidth, racketHeigth},
+        {windowWidth - racketWidth, windowHeight / 2 - racketHeigth / 2, racketWidth, racketHeigth},
         RAYWHITE
     };
 
@@ -90,22 +90,22 @@ int main() {
 
         // Ball movement
         switch (ballDirection) {
-        case LU:
-            ball.rec.x -= ballSpeed * delta;
-            ball.rec.y -= ballSpeed * delta;
-            break;
-        case RU:
-            ball.rec.x += ballSpeed * delta;
-            ball.rec.y -= ballSpeed * delta;
-            break;
-        case RD:
-            ball.rec.x += ballSpeed * delta;
-            ball.rec.y += ballSpeed * delta;
-            break;
-        case LD:
-            ball.rec.x -= ballSpeed * delta;
-            ball.rec.y += ballSpeed * delta;
-            break;
+            case LU:
+                ball.rec.x -= ballSpeed * delta;
+                ball.rec.y -= ballSpeed * delta;
+                break;
+            case RU:
+                ball.rec.x += ballSpeed * delta;
+                ball.rec.y -= ballSpeed * delta;
+                break;
+            case RD:
+                ball.rec.x += ballSpeed * delta;
+                ball.rec.y += ballSpeed * delta;
+                break;
+            case LD:
+                ball.rec.x -= ballSpeed * delta;
+                ball.rec.y += ballSpeed * delta;
+                break;
         }
 
         // Ball - screen collision
@@ -160,6 +160,8 @@ int main() {
             ball.rec.y = GetRandomValue(0, windowHeight - ballSize); 
             ballDirection = GetRandomValue(1, 4); 
             ballSpeed = ballSpeedInit;
+            racketLeft.rec.y = windowHeight / 2 - racketHeigth / 2;
+            racketRight.rec.y = windowHeight / 2 - racketHeigth / 2;
             isGoal = false;
         }
 
