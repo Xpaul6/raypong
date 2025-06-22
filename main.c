@@ -1,5 +1,7 @@
 #include "include/raylib.h"
 #include <time.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <stdbool.h>
 
 typedef struct Object {
@@ -34,7 +36,7 @@ bool isPaused = true;
 int main() {
 
     // Window init
-    InitWindow(windowWidth, windowHeight, "pong");
+    InitWindow(windowWidth, windowHeight, "raypong");
     SetTargetFPS(60);
 
     int initialRacketLeftX = 0;
@@ -59,7 +61,8 @@ int main() {
         {initialBallX, initialBallY, ballSize, ballSize},
         RAYWHITE
     };
-    ballDirection = time(NULL) % 2 == 0 ? 2 : 1; 
+    srand(time(NULL));
+    ballDirection = rand() % 4 + 1; 
 
     // Main game loop
     while(!WindowShouldClose()) {
@@ -190,7 +193,8 @@ int main() {
         if (isGoal) {
             ball.rec.x = initialBallX;
             ball.rec.y = initialBallY;
-            ballDirection = time(NULL) % 2 == 0 ? 2 : 1; 
+            ballDirection = rand() % 4 + 1; 
+            printf("%u\n", ballDirection);
             ballSpeed = ballSpeedInit;
 
             racketLeft.rec.x = initialRacketLeftX;
