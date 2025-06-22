@@ -1,4 +1,5 @@
 #include "include/raylib.h"
+#include <time.h>
 #include <stdbool.h>
 
 typedef struct Object {
@@ -28,32 +29,63 @@ int scoreLeft = 0;
 int scoreRight = 0;
 bool isGoal = false;
 float ballSpeed = ballSpeedInit;
+bool isPaused = true;
 
 int main() {
 
     // Window init
-    InitWindow(windowWidth, windowHeight, "raypong");
+    InitWindow(windowWidth, windowHeight, "pong");
     SetTargetFPS(60);
+
+    int initialRacketLeftX = 0;
+    int initialRacketLeftY = windowHeight / 2 - racketHeigth / 2;
+    int initialRacketRightX = windowWidth - racketWidth;
+    int initialRacketRightY = windowHeight / 2 - racketHeigth / 2;
+    int initialBallX = windowWidth / 2 - ballSize / 2;
+    int initialBallY = windowHeight / 2 - ballSize / 2;
 
     // Objects init
     Object racketLeft = {
-        {0, windowHeight / 2 - racketHeigth / 2, racketWidth, racketHeigth},
+        {initialRacketLeftX, initialRacketLeftY, racketWidth, racketHeigth},
         RAYWHITE
     };
 
     Object racketRight = {
-        {windowWidth - racketWidth, windowHeight / 2 - racketHeigth / 2, racketWidth, racketHeigth},
+        {initialRacketRightX, initialRacketRightY, racketWidth, racketHeigth},
         RAYWHITE
     };
 
     Object ball = {
-        {windowWidth / 2 + ballSize / 2, windowHeight / 2 + ballSize / 2, ballSize, ballSize},
+        {initialBallX, initialBallY, ballSize, ballSize},
         RAYWHITE
     };
-    ballDirection = GetRandomValue(1, 4); 
+    ballDirection = time(NULL) % 2 == 0 ? 2 : 1; 
 
     // Main game loop
     while(!WindowShouldClose()) {
+        if (isPaused) {
+            if (IsKeyDown(KEY_SPACE)) {
+                isPaused = false;
+            }
+            BeginDrawing();
+
+            ClearBackground(BLACK);
+
+            DrawLine(windowWidth / 2, 0, windowWidth / 2, windowHeight, GRAY);
+            DrawText(TextFormat("%i", scoreLeft), windowWidth / 2 - 50 - MeasureText(TextFormat("%i", scoreLeft), 40) / 2, 50, 40, RAYWHITE);
+            DrawText(TextFormat("%i", scoreRight), windowWidth / 2 + 50 - MeasureText(TextFormat("%i", scoreRight), 40) / 2, 50, 40, RAYWHITE);
+
+            DrawRectangleRec(racketLeft.rec, racketLeft.color);
+            DrawRectangleRec(racketRight.rec, racketRight.color);
+            DrawRectangleRec(ball.rec, ball.color);
+
+            DrawText("Press SPACE to play", windowWidth / 2 - MeasureText("Press SPACE to play", 20) / 2, 5, 20, RAYWHITE);
+
+            EndDrawing();
+
+            continue;
+        }
+
         double delta = GetFrameTime();
 
         // Player input        
@@ -90,22 +122,22 @@ int main() {
 
         // Ball movement
         switch (ballDirection) {
-            case LU:
-                ball.rec.x -= ballSpeed * delta;
-                ball.rec.y -= ballSpeed * delta;
-                break;
-            case RU:
-                ball.rec.x += ballSpeed * delta;
-                ball.rec.y -= ballSpeed * delta;
-                break;
-            case RD:
-                ball.rec.x += ballSpeed * delta;
-                ball.rec.y += ballSpeed * delta;
-                break;
-            case LD:
-                ball.rec.x -= ballSpeed * delta;
-                ball.rec.y += ballSpeed * delta;
-                break;
+        case LU:
+            ball.rec.x -= ballSpeed * delta;
+            ball.rec.y -= ballSpeed * delta;
+            break;
+        case RU:
+            ball.rec.x += ballSpeed * delta;
+            ball.rec.y -= ballSpeed * delta;
+            break;
+        case RD:
+            ball.rec.x += ballSpeed * delta;
+            ball.rec.y += ballSpeed * delta;
+            break;
+        case LD:
+            ball.rec.x -= ballSpeed * delta;
+            ball.rec.y += ballSpeed * delta;
+            break;
         }
 
         // Ball - screen collision
@@ -156,13 +188,17 @@ int main() {
             isGoal = true;
         }
         if (isGoal) {
-            ball.rec.x = windowWidth / 2 + ballSize / 2;
-            ball.rec.y = GetRandomValue(0, windowHeight - ballSize); 
-            ballDirection = GetRandomValue(1, 4); 
+            ball.rec.x = initialBallX;
+            ball.rec.y = initialBallY;
+            ballDirection = time(NULL) % 2 == 0 ? 2 : 1; 
             ballSpeed = ballSpeedInit;
-            racketLeft.rec.y = windowHeight / 2 - racketHeigth / 2;
-            racketRight.rec.y = windowHeight / 2 - racketHeigth / 2;
+
+            racketLeft.rec.x = initialRacketLeftX;
+            racketLeft.rec.y = initialRacketLeftY;
+            racketRight.rec.x = initialRacketRightX;
+            racketRight.rec.y = initialRacketRightY;
             isGoal = false;
+            isPaused = true;
         }
 
         // Render
