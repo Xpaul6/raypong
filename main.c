@@ -1,7 +1,6 @@
 #include "include/raylib.h"
 #include <time.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
 
 typedef struct Object {
@@ -194,7 +193,6 @@ int main() {
             ball.rec.x = initialBallX;
             ball.rec.y = initialBallY;
             ballDirection = rand() % 4 + 1; 
-            printf("%u\n", ballDirection);
             ballSpeed = ballSpeedInit;
 
             racketLeft.rec.x = initialRacketLeftX;
