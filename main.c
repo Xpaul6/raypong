@@ -9,10 +9,10 @@ typedef struct Object {
 
 // Enums
 enum Dir {
-    LU = 1,
-    RU = 2,
-    RD = 3,
-    LD = 4,
+    LU = 1, // Left - Up
+    RU = 2, // Right - Up
+    RD = 3, // Right - Down
+    LD = 4, // Left - Down
 };
 
 // Constants
@@ -34,6 +34,7 @@ enum Dir {
 #define INIT_BALL_X WINDOW_WIDTH / 2 - BALL_SIZE / 2
 #define INIT_BALL_Y WINDOW_HEIGHT / 2 - BALL_SIZE / 2
 
+// Functions
 void render_pause_menu(bool* isPaused, Object ball, Object racketLeft, Object racketRight, int scoreLeft, int scoreRight) {
         if (IsKeyDown(KEY_SPACE)) {
             *isPaused = false;
@@ -210,7 +211,7 @@ int main() {
     };
 
     // Variables definition
-    enum Dir ballDirection = GetRandomValue(1, 4); 
+    enum Dir ballDirection = GetRandomValue(1, 4);
     int scoreLeft = 0;
     int scoreRight = 0;
     bool isGoal = false;
@@ -239,6 +240,7 @@ int main() {
 
         check_scoring(&ball, &racketLeft, &racketRight, &ballDirection, &ballSpeed, &scoreLeft, &scoreRight, &isGoal, &isPaused);
 
+        // Render
         render_game(ball, racketLeft, racketRight, scoreLeft, scoreRight);
     }
 
