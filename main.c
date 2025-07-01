@@ -1,7 +1,4 @@
 #include "include/raylib.h"
-#include <stdio.h>
-#include <time.h>
-#include <stdlib.h>
 #include <stdbool.h>
 
 // Structs
@@ -162,7 +159,7 @@ void check_scoring(Object* ball, Object* racketLeft, Object* racketRight, enum D
         if (*isGoal) {
             ball->rec.x = INIT_BALL_X;
             ball->rec.y = INIT_BALL_Y;
-            *ballDirection = rand() % 4 + 1; 
+            *ballDirection = GetRandomValue(1, 4); 
             *ballSpeed = INIT_BALL_SPEED;
 
             racketLeft->rec.x = INIT_RACKET_LEFT_X;
@@ -192,8 +189,6 @@ void render_game(Object ball, Object racketLeft, Object racketRight, int scoreLe
 
 // Entry point
 int main() {
-    srand(time(NULL));
-
     // Window init
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME); 
     SetTargetFPS(TARGET_FPS);
@@ -215,7 +210,7 @@ int main() {
     };
 
     // Variables definition
-    enum Dir ballDirection = rand() % 4 + 1; 
+    enum Dir ballDirection = GetRandomValue(1, 4); 
     int scoreLeft = 0;
     int scoreRight = 0;
     bool isGoal = false;

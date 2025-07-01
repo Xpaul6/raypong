@@ -15,7 +15,7 @@ endif
 TARGET := main$(EXE)
 SOURCE := main.c
 ASM := main.s
-FLAGS := -Wall -Wextra -std=c11 -lraylib  -o
+FLAGS := -Wall -Wextra -std=c11 -lraylib -o
 
 ifeq ($(OS), Windows_NT)
 	RUN := $(TARGET)
