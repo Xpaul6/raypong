@@ -11,21 +11,12 @@ typedef struct Object {
 // Constants
 #define TARGET_FPS 60
 #define WINDOW_NAME "raypong"
-//#define WINDOW_WIDTH 800
-//#define WINDOW_HEIGHT 600
 #define RACKET_SPEED 300.0f
 #define RACKET_HEIGHT 100
 #define RACKET_WIDTH 10
 #define BALL_SIZE 15
 #define INIT_BALL_SPEED 300.0f
 #define BALL_ACCELERATION 10.0f
-
-//#define INIT_RACKET_LEFT_X 0
-//#define INIT_RACKET_LEFT_Y WINDOW_HEIGHT / 2 - RACKET_HEIGHT / 2
-//#define INIT_RACKET_RIGHT_X WINDOW_WIDTH - RACKET_WIDTH
-//#define INIT_RACKET_RIGHT_Y WINDOW_HEIGHT / 2 - RACKET_HEIGHT / 2
-//#define INIT_BALL_X WINDOW_WIDTH / 2 - BALL_SIZE / 2
-//#define INIT_BALL_Y WINDOW_HEIGHT / 2 - BALL_SIZE / 2
 
 int WINDOW_WIDTH = 800;
 int WINDOW_HEIGHT = 600;
@@ -49,8 +40,13 @@ void calculate_window_related_variables() {
     INIT_BALL_Y = WINDOW_HEIGHT / 2 - BALL_SIZE / 2;
 }
 
-void handle_window_resize(Object* ball, Object* racketRight) {
+void handle_window_resize(Object* ball, Object* racketRight, Object* racketLeft) {
     racketRight->rec.x = INIT_RACKET_RIGHT_X;
+    racketRight->rec.y = INIT_RACKET_RIGHT_Y;
+
+    racketLeft->rec.x = INIT_RACKET_LEFT_X;
+    racketLeft->rec.y = INIT_RACKET_RIGHT_Y;
+
     ball->rec.x = INIT_BALL_X;
     ball->rec.y = INIT_BALL_Y;
 }
@@ -188,7 +184,6 @@ void render_game(Object ball, Object racketLeft, Object racketRight, int scoreLe
 // Entry point
 int main() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     // Window init
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME); 
     calculate_window_related_variables();
@@ -216,14 +211,20 @@ int main() {
     bool isGoal = false;
     Vector2 ballVelocity = init_ball_velocity();
     bool isPaused = true;
+    bool isResized = false;
 
     // Main game loop
     while(!WindowShouldClose()) {
-        calculate_window_related_variables();
         if (IsWindowResized()) {
-            handle_window_resize(&ball, &racketRight);
+            isResized = true;
         }
+
         if (isPaused) {
+            if (isResized) {
+                calculate_window_related_variables();
+                handle_window_resize(&ball, &racketRight, &racketLeft);
+                isResized = false;
+            }
             render_pause_menu(&isPaused, ball, racketLeft, racketRight, scoreLeft, scoreRight);
             continue;
         }
