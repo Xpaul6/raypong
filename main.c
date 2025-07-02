@@ -1,19 +1,12 @@
 #include "include/raylib.h"
 #include <stdbool.h>
+#include <stdio.h>
 
 // Structs
 typedef struct Object {
     Rectangle rec;
     Color color;
 } Object;
-
-// Enums
-enum Dir {
-    LU = 1, // Left - Up
-    RU = 2, // Right - Up
-    RD = 3, // Right - Down
-    LD = 4, // Left - Down
-};
 
 // Constants
 #define TARGET_FPS 60
@@ -35,6 +28,14 @@ enum Dir {
 #define INIT_BALL_Y WINDOW_HEIGHT / 2 - BALL_SIZE / 2
 
 // Functions
+
+Vector2 init_ball_velocity() {
+    Vector2 ballVelocity = (Vector2){INIT_BALL_SPEED, INIT_BALL_SPEED};
+    GetRandomValue(0, 1) == 1 ? ballVelocity.x = -ballVelocity.x : 1;
+    GetRandomValue(0, 1) == 1 ? ballVelocity.y = -ballVelocity.y : 1;
+    return ballVelocity;
+}
+
 void render_pause_menu(bool* isPaused, Object ball, Object racketLeft, Object racketRight, int scoreLeft, int scoreRight) {
     if (IsKeyDown(KEY_SPACE)) {
         *isPaused = false;
@@ -87,68 +88,38 @@ void handle_player_input(float delta, Object* racketLeft, Object* racketRight) {
     }
 }
 
-void calc_ball_move(Object* ball, enum Dir ballDirection, float ballSpeed, double delta) {
-    switch (ballDirection) {
-        case LU:
-            ball->rec.x -= ballSpeed * delta;
-            ball->rec.y -= ballSpeed * delta;
-            break;
-        case RU:
-            ball->rec.x += ballSpeed * delta;
-            ball->rec.y -= ballSpeed * delta;
-            break;
-        case RD:
-            ball->rec.x += ballSpeed * delta;
-            ball->rec.y += ballSpeed * delta;
-            break;
-        case LD:
-            ball->rec.x -= ballSpeed * delta;
-            ball->rec.y += ballSpeed * delta;
-            break;
-    }
+void calc_ball_move(Object* ball, Vector2 ballVelocity, double delta) {
+    ball->rec.x += ballVelocity.x * delta;
+    ball->rec.y += ballVelocity.y * delta;
 }
 
-void calc_ball_screen_collision(Object* ball, enum Dir* ballDirection) {
+void calc_ball_screen_collision(Object* ball, Vector2* ballVelocity) {
     if (ball->rec.y <= 0) {
         ball->rec.y = 0;
-        if (*ballDirection == LU) {
-            *ballDirection = LD;
-        } else {
-            *ballDirection = RD;
-        }
+        ballVelocity->y *= -1;
     }
     if (ball->rec.y >= WINDOW_HEIGHT - BALL_SIZE) {
         ball->rec.y = WINDOW_HEIGHT - BALL_SIZE;
-        if (*ballDirection == LD) {
-            *ballDirection = LU;
-        } else {
-            *ballDirection = RU;
-        }
+        ballVelocity->y *= -1;
     }
 }
 
-void calc_ball_racket_collision(Object* ball, Object* racketLeft, Object* racketRight, enum Dir* ballDirection, float* ballSpeed) {
+void calc_ball_racket_collision(Object* ball, Object* racketLeft, Object* racketRight, Vector2* ballVelocity) {
     if (CheckCollisionRecs(ball->rec, racketLeft->rec)) {
         ball->rec.x = 0 + RACKET_WIDTH;
-        *ballSpeed += BALL_ACCELERATION;
-        if (*ballDirection == LU) {
-            *ballDirection = RU;
-        } else {
-            *ballDirection = RD;
-        }
+        ballVelocity->x *= -1;
+        ballVelocity->x += BALL_ACCELERATION;
+        ballVelocity->y += (ballVelocity->y > 0) ? BALL_ACCELERATION : -BALL_ACCELERATION;
     }
     if (CheckCollisionRecs(ball->rec, racketRight->rec)) {
         ball->rec.x = WINDOW_WIDTH - RACKET_WIDTH - BALL_SIZE;
-        *ballSpeed += BALL_ACCELERATION;
-        if (*ballDirection == RU) {
-            *ballDirection = LU;
-        } else {
-            *ballDirection = LD;
-        }
+        ballVelocity->x += BALL_ACCELERATION;
+        ballVelocity->x *= -1;
+        ballVelocity->y += (ballVelocity->y > 0) ? BALL_ACCELERATION : -BALL_ACCELERATION;
     }
 }
 
-void check_scoring(Object* ball, Object* racketLeft, Object* racketRight, enum Dir* ballDirection, float* ballSpeed, int* scoreLeft, int* scoreRight, bool* isGoal, bool* isPaused) {
+void check_scoring(Object* ball, Object* racketLeft, Object* racketRight, Vector2* ballVelocity, int* scoreLeft, int* scoreRight, bool* isGoal, bool* isPaused) {
     if (ball->rec.x + BALL_SIZE < 0) {
         *scoreRight += 1;
         *isGoal = true;
@@ -160,8 +131,7 @@ void check_scoring(Object* ball, Object* racketLeft, Object* racketRight, enum D
     if (*isGoal) {
         ball->rec.x = INIT_BALL_X;
         ball->rec.y = INIT_BALL_Y;
-        *ballDirection = GetRandomValue(1, 4); 
-        *ballSpeed = INIT_BALL_SPEED;
+        *ballVelocity = init_ball_velocity();
 
         racketLeft->rec.x = INIT_RACKET_LEFT_X;
         racketLeft->rec.y = INIT_RACKET_LEFT_Y;
@@ -211,11 +181,10 @@ int main() {
     };
 
     // Variables definition
-    enum Dir ballDirection = GetRandomValue(1, 4);
     int scoreLeft = 0;
     int scoreRight = 0;
     bool isGoal = false;
-    float ballSpeed = INIT_BALL_SPEED;
+    Vector2 ballVelocity = init_ball_velocity();
     bool isPaused = true;
 
     // Main game loop
@@ -231,14 +200,13 @@ int main() {
         handle_player_input(delta, &racketLeft, &racketRight);
 
         // Calculations
+        calc_ball_move(&ball, ballVelocity, delta);
 
-        calc_ball_move(&ball, ballDirection, ballSpeed, delta);
+        calc_ball_screen_collision(&ball, &ballVelocity);
 
-        calc_ball_screen_collision(&ball, &ballDirection);
+        calc_ball_racket_collision(&ball, &racketLeft, &racketRight, &ballVelocity);
 
-        calc_ball_racket_collision(&ball, &racketLeft, &racketRight, &ballDirection, &ballSpeed);
-
-        check_scoring(&ball, &racketLeft, &racketRight, &ballDirection, &ballSpeed, &scoreLeft, &scoreRight, &isGoal, &isPaused);
+        check_scoring(&ball, &racketLeft, &racketRight, &ballVelocity, &scoreLeft, &scoreRight, &isGoal, &isPaused);
 
         // Render
         render_game(ball, racketLeft, racketRight, scoreLeft, scoreRight);
