@@ -119,7 +119,7 @@ void calc_ball_racket_collision(Object* ball, Object* racketLeft, Object* racket
     }
 }
 
-void check_scoring(Object* ball, Object* racketLeft, Object* racketRight, Vector2* ballVelocity, int* scoreLeft, int* scoreRight, bool* isGoal, bool* isPaused) {
+void check_scoring(Object* ball, int* scoreLeft, int* scoreRight, bool* isGoal) {
     if (ball->rec.x + BALL_SIZE < 0) {
         *scoreRight += 1;
         *isGoal = true;
@@ -128,18 +128,19 @@ void check_scoring(Object* ball, Object* racketLeft, Object* racketRight, Vector
         *scoreLeft += 1;
         *isGoal = true;
     }
-    if (*isGoal) {
-        ball->rec.x = INIT_BALL_X;
-        ball->rec.y = INIT_BALL_Y;
-        *ballVelocity = init_ball_velocity();
+}
 
-        racketLeft->rec.x = INIT_RACKET_LEFT_X;
-        racketLeft->rec.y = INIT_RACKET_LEFT_Y;
-        racketRight->rec.x = INIT_RACKET_RIGHT_X;
-        racketRight->rec.y = INIT_RACKET_RIGHT_Y;
-        *isGoal = false;
-        *isPaused = true;
-    }
+void reset_game(Object* ball, Object* racketLeft, Object* racketRight, Vector2* ballVelocity, bool* isGoal, bool* isPaused) {
+    ball->rec.x = INIT_BALL_X;
+    ball->rec.y = INIT_BALL_Y;
+    *ballVelocity = init_ball_velocity();
+
+    racketLeft->rec.x = INIT_RACKET_LEFT_X;
+    racketLeft->rec.y = INIT_RACKET_LEFT_Y;
+    racketRight->rec.x = INIT_RACKET_RIGHT_X;
+    racketRight->rec.y = INIT_RACKET_RIGHT_Y;
+    *isGoal = false;
+    *isPaused = true;
 }
 
 void render_game(Object ball, Object racketLeft, Object racketRight, int scoreLeft, int scoreRight) {
@@ -206,7 +207,10 @@ int main() {
 
         calc_ball_racket_collision(&ball, &racketLeft, &racketRight, &ballVelocity);
 
-        check_scoring(&ball, &racketLeft, &racketRight, &ballVelocity, &scoreLeft, &scoreRight, &isGoal, &isPaused);
+        check_scoring(&ball, &scoreLeft, &scoreRight, &isGoal);
+        if (isGoal) {
+            reset_game(&ball, &racketLeft, &racketRight, &ballVelocity, &isGoal, &isPaused);
+        }
 
         // Render
         render_game(ball, racketLeft, racketRight, scoreLeft, scoreRight);
