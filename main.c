@@ -36,25 +36,25 @@ enum Dir {
 
 // Functions
 void render_pause_menu(bool* isPaused, Object ball, Object racketLeft, Object racketRight, int scoreLeft, int scoreRight) {
-        if (IsKeyDown(KEY_SPACE)) {
-            *isPaused = false;
-            return;
-        }
-        BeginDrawing();
+    if (IsKeyDown(KEY_SPACE)) {
+        *isPaused = false;
+        return;
+    }
+    BeginDrawing();
 
-        ClearBackground(BLACK);
+    ClearBackground(BLACK);
 
-        DrawLine(WINDOW_WIDTH / 2, 0, WINDOW_WIDTH / 2, WINDOW_HEIGHT, GRAY);
-        DrawText(TextFormat("%i", scoreLeft), WINDOW_WIDTH / 2 - 50 - MeasureText(TextFormat("%i", scoreLeft), 40) / 2, 50, 40, RAYWHITE);
-        DrawText(TextFormat("%i", scoreRight), WINDOW_WIDTH / 2 + 50 - MeasureText(TextFormat("%i", scoreRight), 40) / 2, 50, 40, RAYWHITE);
+    DrawLine(WINDOW_WIDTH / 2, 0, WINDOW_WIDTH / 2, WINDOW_HEIGHT, GRAY);
+    DrawText(TextFormat("%i", scoreLeft), WINDOW_WIDTH / 2 - 50 - MeasureText(TextFormat("%i", scoreLeft), 40) / 2, 50, 40, RAYWHITE);
+    DrawText(TextFormat("%i", scoreRight), WINDOW_WIDTH / 2 + 50 - MeasureText(TextFormat("%i", scoreRight), 40) / 2, 50, 40, RAYWHITE);
 
-        DrawRectangleRec(racketLeft.rec, racketLeft.color);
-        DrawRectangleRec(racketRight.rec, racketRight.color);
-        DrawRectangleRec(ball.rec, ball.color);
+    DrawRectangleRec(racketLeft.rec, racketLeft.color);
+    DrawRectangleRec(racketRight.rec, racketRight.color);
+    DrawRectangleRec(ball.rec, ball.color);
 
-        DrawText("Press SPACE to play", WINDOW_WIDTH / 2 - MeasureText("Press SPACE to play", 20) / 2, 5, 20, RAYWHITE);
+    DrawText("Press SPACE to play", WINDOW_WIDTH / 2 - MeasureText("Press SPACE to play", 20) / 2, 5, 20, RAYWHITE);
 
-        EndDrawing();
+    EndDrawing();
 }
 
 void handle_player_input(float delta, Object* racketLeft, Object* racketRight) {
@@ -109,22 +109,22 @@ void calc_ball_move(Object* ball, enum Dir ballDirection, float ballSpeed, doubl
 }
 
 void calc_ball_screen_collision(Object* ball, enum Dir* ballDirection) {
-        if (ball->rec.y <= 0) {
-            ball->rec.y = 0;
-            if (*ballDirection == LU) {
-                *ballDirection = LD;
-            } else {
-                *ballDirection = RD;
-            }
+    if (ball->rec.y <= 0) {
+        ball->rec.y = 0;
+        if (*ballDirection == LU) {
+            *ballDirection = LD;
+        } else {
+            *ballDirection = RD;
         }
-        if (ball->rec.y >= WINDOW_HEIGHT - BALL_SIZE) {
-            ball->rec.y = WINDOW_HEIGHT - BALL_SIZE;
-            if (*ballDirection == LD) {
-                *ballDirection = LU;
-            } else {
-                *ballDirection = RU;
-            }
+    }
+    if (ball->rec.y >= WINDOW_HEIGHT - BALL_SIZE) {
+        ball->rec.y = WINDOW_HEIGHT - BALL_SIZE;
+        if (*ballDirection == LD) {
+            *ballDirection = LU;
+        } else {
+            *ballDirection = RU;
         }
+    }
 }
 
 void calc_ball_racket_collision(Object* ball, Object* racketLeft, Object* racketRight, enum Dir* ballDirection, float* ballSpeed) {
@@ -149,27 +149,27 @@ void calc_ball_racket_collision(Object* ball, Object* racketLeft, Object* racket
 }
 
 void check_scoring(Object* ball, Object* racketLeft, Object* racketRight, enum Dir* ballDirection, float* ballSpeed, int* scoreLeft, int* scoreRight, bool* isGoal, bool* isPaused) {
-        if (ball->rec.x + BALL_SIZE < 0) {
-            *scoreRight += 1;
-            *isGoal = true;
-        }
-        if (ball->rec.x > WINDOW_WIDTH) {
-            *scoreLeft += 1;
-            *isGoal = true;
-        }
-        if (*isGoal) {
-            ball->rec.x = INIT_BALL_X;
-            ball->rec.y = INIT_BALL_Y;
-            *ballDirection = GetRandomValue(1, 4); 
-            *ballSpeed = INIT_BALL_SPEED;
+    if (ball->rec.x + BALL_SIZE < 0) {
+        *scoreRight += 1;
+        *isGoal = true;
+    }
+    if (ball->rec.x > WINDOW_WIDTH) {
+        *scoreLeft += 1;
+        *isGoal = true;
+    }
+    if (*isGoal) {
+        ball->rec.x = INIT_BALL_X;
+        ball->rec.y = INIT_BALL_Y;
+        *ballDirection = GetRandomValue(1, 4); 
+        *ballSpeed = INIT_BALL_SPEED;
 
-            racketLeft->rec.x = INIT_RACKET_LEFT_X;
-            racketLeft->rec.y = INIT_RACKET_LEFT_Y;
-            racketRight->rec.x = INIT_RACKET_RIGHT_X;
-            racketRight->rec.y = INIT_RACKET_RIGHT_Y;
-            *isGoal = false;
-            *isPaused = true;
-        }
+        racketLeft->rec.x = INIT_RACKET_LEFT_X;
+        racketLeft->rec.y = INIT_RACKET_LEFT_Y;
+        racketRight->rec.x = INIT_RACKET_RIGHT_X;
+        racketRight->rec.y = INIT_RACKET_RIGHT_Y;
+        *isGoal = false;
+        *isPaused = true;
+    }
 }
 
 void render_game(Object ball, Object racketLeft, Object racketRight, int scoreLeft, int scoreRight) {
