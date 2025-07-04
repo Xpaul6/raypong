@@ -1,4 +1,5 @@
 #include "include/raylib.h"
+#include "include/raymath.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -59,7 +60,7 @@ void handle_window_resize(Object* ball, Object* racketRight, Object* racketLeft)
     racketRight->rec.y = g_initRacketRightY;
 
     racketLeft->rec.x = g_initRacketLeftX;
-    racketLeft->rec.y = g_initRacketRightY;
+    racketLeft->rec.y = g_initRacketLeftY;
 
     ball->rec.x = g_initBallX;
     ball->rec.y = g_initBallY;
@@ -100,32 +101,14 @@ void render_pause_menu(bool* isPaused, Object ball, Object racketLeft, Object ra
 
 void handle_player_input(float delta, Object* racketLeft, Object* racketRight) {
     // Left Racket
-    if (IsKeyDown('S')) {
-        racketLeft->rec.y += RACKET_SPEED * delta;
-    }
-    if (racketLeft->rec.y < 0) {
-        racketLeft->rec.y = 0;
-    }
-    if (IsKeyDown('W')) {
-        racketLeft->rec.y -= RACKET_SPEED * delta;
-    }
-    if (racketLeft->rec.y > g_windowHeight - RACKET_HEIGHT) {
-        racketLeft->rec.y = g_windowHeight - RACKET_HEIGHT;
-    }
+    if (IsKeyDown('S')) racketLeft->rec.y += RACKET_SPEED * delta;
+    if (IsKeyDown('W')) racketLeft->rec.y -= RACKET_SPEED * delta;
+    racketLeft->rec.y = Clamp(racketLeft->rec.y, 0, g_windowHeight - RACKET_HEIGHT);
 
     // Right racket
-    if (IsKeyDown(KEY_DOWN)) {
-        racketRight->rec.y += RACKET_SPEED * delta;
-    }
-    if (racketRight->rec.y < 0) {
-        racketRight->rec.y = 0;
-    }
-    if (IsKeyDown(KEY_UP)) {
-        racketRight->rec.y -= RACKET_SPEED * delta;
-    }
-    if (racketRight->rec.y > g_windowHeight - RACKET_HEIGHT) {
-        racketRight->rec.y = g_windowHeight - RACKET_HEIGHT;
-    }
+    if (IsKeyDown(KEY_DOWN)) racketRight->rec.y += RACKET_SPEED * delta;
+    if (IsKeyDown(KEY_UP)) racketRight->rec.y -= RACKET_SPEED * delta;
+    racketRight->rec.y = Clamp(racketRight->rec.y, 0, g_windowHeight - RACKET_HEIGHT);
 }
 
 void calc_ball_move(Object* ball, Vector2 ballVelocity, double delta) {
