@@ -178,16 +178,20 @@ void render_game(Object ball, Object racketLeft, Object racketRight, int scoreLe
     DrawRectangleRec(racketRight.rec, racketRight.color);
     DrawRectangleRec(ball.rec, ball.color);
 
+    DrawLine(0, WINDOW_HEIGHT + 1, WINDOW_WIDTH + 1, WINDOW_HEIGHT + 1, GRAY);
+    DrawLine(WINDOW_WIDTH + 1, 0, WINDOW_WIDTH + 1, WINDOW_HEIGHT + 1, GRAY);
+
     EndDrawing();
 }
 
 // Entry point
 int main() {
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     // Window init
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME); 
-    calculate_window_related_variables();
     SetTargetFPS(TARGET_FPS);
+
+    calculate_window_related_variables();
 
     // Objects init
     Object racketLeft = {
