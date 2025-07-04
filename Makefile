@@ -12,7 +12,7 @@ else
 	TXTEDIT := less
 endif
 
-TARGET := main$(EXE)
+TARGET := raypong$(EXE)
 SOURCE := main.c
 ASM := main.s
 FLAGS := -Wall -Wextra -std=c11 -lraylib -o
