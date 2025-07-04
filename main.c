@@ -18,37 +18,38 @@ typedef struct Object {
 #define INIT_BALL_SPEED 300.0f
 #define BALL_ACCELERATION 10.0f
 
-int WINDOW_WIDTH = 800;
-int WINDOW_HEIGHT = 600;
-int INIT_RACKET_LEFT_X;
-int INIT_RACKET_LEFT_Y;
-int INIT_RACKET_RIGHT_X;
-int INIT_RACKET_RIGHT_Y;
-int INIT_BALL_X;
-int INIT_BALL_Y;
+// Global variables
+int g_windowWidth = 800;
+int g_windowHeight = 600;
+int g_initRacketLeftX;
+int g_initRacketLeftY;
+int g_initRacketRightX;
+int g_initRacketRightY;
+int g_initBallX;
+int g_initBallY;
 
 // Functions
 
 void calculate_window_related_variables() {
-    WINDOW_WIDTH = GetScreenWidth();
-    WINDOW_HEIGHT = GetScreenHeight();
-    INIT_RACKET_LEFT_X = 0;
-    INIT_RACKET_LEFT_Y = WINDOW_HEIGHT / 2 - RACKET_HEIGHT / 2;
-    INIT_RACKET_RIGHT_X = WINDOW_WIDTH - RACKET_WIDTH;
-    INIT_RACKET_RIGHT_Y = WINDOW_HEIGHT / 2 - RACKET_HEIGHT / 2;
-    INIT_BALL_X = WINDOW_WIDTH / 2 - BALL_SIZE / 2;
-    INIT_BALL_Y = WINDOW_HEIGHT / 2 - BALL_SIZE / 2;
+    g_windowWidth = GetScreenWidth();
+    g_windowHeight = GetScreenHeight();
+    g_initRacketLeftX = 0;
+    g_initRacketLeftY = g_windowHeight / 2 - RACKET_HEIGHT / 2;
+    g_initRacketRightX = g_windowWidth - RACKET_WIDTH;
+    g_initRacketRightY = g_windowHeight / 2 - RACKET_HEIGHT / 2;
+    g_initBallX = g_windowWidth / 2 - BALL_SIZE / 2;
+    g_initBallY = g_windowHeight / 2 - BALL_SIZE / 2;
 }
 
 void handle_window_resize(Object* ball, Object* racketRight, Object* racketLeft) {
-    racketRight->rec.x = INIT_RACKET_RIGHT_X;
-    racketRight->rec.y = INIT_RACKET_RIGHT_Y;
+    racketRight->rec.x = g_initRacketRightX;
+    racketRight->rec.y = g_initRacketRightY;
 
-    racketLeft->rec.x = INIT_RACKET_LEFT_X;
-    racketLeft->rec.y = INIT_RACKET_RIGHT_Y;
+    racketLeft->rec.x = g_initRacketLeftX;
+    racketLeft->rec.y = g_initRacketRightY;
 
-    ball->rec.x = INIT_BALL_X;
-    ball->rec.y = INIT_BALL_Y;
+    ball->rec.x = g_initBallX;
+    ball->rec.y = g_initBallY;
 }
 
 Vector2 init_ball_velocity() {
@@ -59,7 +60,7 @@ Vector2 init_ball_velocity() {
 }
 
 void render_pause_menu(bool* isPaused, Object ball, Object racketLeft, Object racketRight, int scoreLeft, int scoreRight) {
-    if (IsKeyDown(KEY_SPACE)) {
+if (IsKeyDown(KEY_SPACE)) {
         *isPaused = false;
         return;
     }
@@ -67,15 +68,15 @@ void render_pause_menu(bool* isPaused, Object ball, Object racketLeft, Object ra
 
     ClearBackground(BLACK);
 
-    DrawLine(WINDOW_WIDTH / 2, 0, WINDOW_WIDTH / 2, WINDOW_HEIGHT, GRAY);
-    DrawText(TextFormat("%i", scoreLeft), WINDOW_WIDTH / 2 - 50 - MeasureText(TextFormat("%i", scoreLeft), 40) / 2, 50, 40, RAYWHITE);
-    DrawText(TextFormat("%i", scoreRight), WINDOW_WIDTH / 2 + 50 - MeasureText(TextFormat("%i", scoreRight), 40) / 2, 50, 40, RAYWHITE);
+    DrawLine(g_windowWidth / 2, 0, g_windowWidth / 2, g_windowHeight, GRAY);
+    DrawText(TextFormat("%i", scoreLeft), g_windowWidth / 2 - 50 - MeasureText(TextFormat("%i", scoreLeft), 40) / 2, 50, 40, RAYWHITE);
+    DrawText(TextFormat("%i", scoreRight), g_windowWidth / 2 + 50 - MeasureText(TextFormat("%i", scoreRight), 40) / 2, 50, 40, RAYWHITE);
 
     DrawRectangleRec(racketLeft.rec, racketLeft.color);
     DrawRectangleRec(racketRight.rec, racketRight.color);
     DrawRectangleRec(ball.rec, ball.color);
 
-    DrawText("Press SPACE to play", WINDOW_WIDTH / 2 - MeasureText("Press SPACE to play", 20) / 2, 5, 20, RAYWHITE);
+    DrawText("Press SPACE to play", g_windowWidth / 2 - MeasureText("Press SPACE to play", 20) / 2, 5, 20, RAYWHITE);
 
     EndDrawing();
 }
@@ -91,8 +92,8 @@ void handle_player_input(float delta, Object* racketLeft, Object* racketRight) {
     if (IsKeyDown('W')) {
         racketLeft->rec.y -= RACKET_SPEED * delta;
     }
-    if (racketLeft->rec.y > WINDOW_HEIGHT - RACKET_HEIGHT) {
-        racketLeft->rec.y = WINDOW_HEIGHT - RACKET_HEIGHT;
+    if (racketLeft->rec.y > g_windowHeight - RACKET_HEIGHT) {
+        racketLeft->rec.y = g_windowHeight - RACKET_HEIGHT;
     }
 
     // Right racket
@@ -105,8 +106,8 @@ void handle_player_input(float delta, Object* racketLeft, Object* racketRight) {
     if (IsKeyDown(KEY_UP)) {
         racketRight->rec.y -= RACKET_SPEED * delta;
     }
-    if (racketRight->rec.y > WINDOW_HEIGHT - RACKET_HEIGHT) {
-        racketRight->rec.y = WINDOW_HEIGHT - RACKET_HEIGHT;
+    if (racketRight->rec.y > g_windowHeight - RACKET_HEIGHT) {
+        racketRight->rec.y = g_windowHeight - RACKET_HEIGHT;
     }
 }
 
@@ -120,8 +121,8 @@ void calc_ball_screen_collision(Object* ball, Vector2* ballVelocity) {
         ball->rec.y = 0;
         ballVelocity->y *= -1;
     }
-    if (ball->rec.y >= WINDOW_HEIGHT - BALL_SIZE) {
-        ball->rec.y = WINDOW_HEIGHT - BALL_SIZE;
+    if (ball->rec.y >= g_windowHeight - BALL_SIZE) {
+        ball->rec.y = g_windowHeight - BALL_SIZE;
         ballVelocity->y *= -1;
     }
 }
@@ -134,7 +135,7 @@ void calc_ball_racket_collision(Object* ball, Object* racketLeft, Object* racket
         ballVelocity->y += (ballVelocity->y > 0) ? BALL_ACCELERATION : -BALL_ACCELERATION;
     }
     if (CheckCollisionRecs(ball->rec, racketRight->rec)) {
-        ball->rec.x = WINDOW_WIDTH - RACKET_WIDTH - BALL_SIZE;
+        ball->rec.x = g_windowWidth - RACKET_WIDTH - BALL_SIZE;
         ballVelocity->x += BALL_ACCELERATION;
         ballVelocity->x *= -1;
         ballVelocity->y += (ballVelocity->y > 0) ? BALL_ACCELERATION : -BALL_ACCELERATION;
@@ -146,21 +147,21 @@ void check_scoring(Object* ball, int* scoreLeft, int* scoreRight, bool* isGoal) 
         *scoreRight += 1;
         *isGoal = true;
     }
-    if (ball->rec.x > WINDOW_WIDTH) {
+    if (ball->rec.x > g_windowWidth) {
         *scoreLeft += 1;
         *isGoal = true;
     }
 }
 
 void reset_game(Object* ball, Object* racketLeft, Object* racketRight, Vector2* ballVelocity, bool* isGoal, bool* isPaused) {
-    ball->rec.x = INIT_BALL_X;
-    ball->rec.y = INIT_BALL_Y;
+    ball->rec.x = g_initBallX;
+    ball->rec.y = g_initBallY;
     *ballVelocity = init_ball_velocity();
 
-    racketLeft->rec.x = INIT_RACKET_LEFT_X;
-    racketLeft->rec.y = INIT_RACKET_LEFT_Y;
-    racketRight->rec.x = INIT_RACKET_RIGHT_X;
-    racketRight->rec.y = INIT_RACKET_RIGHT_Y;
+    racketLeft->rec.x = g_initRacketLeftX;
+    racketLeft->rec.y = g_initRacketLeftY;
+    racketRight->rec.x = g_initRacketRightX;
+    racketRight->rec.y = g_initRacketRightY;
     *isGoal = false;
     *isPaused = true;
 }
@@ -170,16 +171,16 @@ void render_game(Object ball, Object racketLeft, Object racketRight, int scoreLe
 
     ClearBackground(BLACK);
 
-    DrawLine(WINDOW_WIDTH / 2, 0, WINDOW_WIDTH / 2, WINDOW_HEIGHT, GRAY);
-    DrawText(TextFormat("%i", scoreLeft), WINDOW_WIDTH / 2 - 50 - MeasureText(TextFormat("%i", scoreLeft), 40) / 2, 50, 40, RAYWHITE);
-    DrawText(TextFormat("%i", scoreRight), WINDOW_WIDTH / 2 + 50 - MeasureText(TextFormat("%i", scoreRight), 40) / 2, 50, 40, RAYWHITE);
+    DrawLine(g_windowWidth / 2, 0, g_windowWidth / 2, g_windowHeight, GRAY);
+    DrawText(TextFormat("%i", scoreLeft), g_windowWidth / 2 - 50 - MeasureText(TextFormat("%i", scoreLeft), 40) / 2, 50, 40, RAYWHITE);
+    DrawText(TextFormat("%i", scoreRight), g_windowWidth / 2 + 50 - MeasureText(TextFormat("%i", scoreRight), 40) / 2, 50, 40, RAYWHITE);
 
     DrawRectangleRec(racketLeft.rec, racketLeft.color);
     DrawRectangleRec(racketRight.rec, racketRight.color);
     DrawRectangleRec(ball.rec, ball.color);
 
-    DrawLine(0, WINDOW_HEIGHT + 1, WINDOW_WIDTH + 1, WINDOW_HEIGHT + 1, GRAY);
-    DrawLine(WINDOW_WIDTH + 1, 0, WINDOW_WIDTH + 1, WINDOW_HEIGHT + 1, GRAY);
+    DrawLine(0, g_windowHeight + 1, g_windowWidth + 1, g_windowHeight + 1, GRAY);
+    DrawLine(g_windowWidth + 1, 0, g_windowWidth + 1, g_windowHeight + 1, GRAY);
 
     EndDrawing();
 }
@@ -188,24 +189,24 @@ void render_game(Object ball, Object racketLeft, Object racketRight, int scoreLe
 int main() {
     // Window init
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME); 
+    InitWindow(g_windowWidth, g_windowHeight, WINDOW_NAME); 
     SetTargetFPS(TARGET_FPS);
 
     calculate_window_related_variables();
 
     // Objects init
     Object racketLeft = {
-        { INIT_RACKET_LEFT_X, INIT_RACKET_LEFT_Y, RACKET_WIDTH, RACKET_HEIGHT },
+        { g_initRacketLeftX, g_initRacketLeftY, RACKET_WIDTH, RACKET_HEIGHT },
         RAYWHITE
     };
 
     Object racketRight = {
-        { INIT_RACKET_RIGHT_X, INIT_RACKET_RIGHT_Y, RACKET_WIDTH, RACKET_HEIGHT },
+        { g_initRacketRightX, g_initRacketRightY, RACKET_WIDTH, RACKET_HEIGHT },
         RAYWHITE
     };
 
     Object ball = {
-        { INIT_BALL_X, INIT_BALL_Y, BALL_SIZE, BALL_SIZE },
+        { g_initBallX, g_initBallY, BALL_SIZE, BALL_SIZE },
         RAYWHITE
     };
 
