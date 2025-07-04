@@ -52,6 +52,18 @@ void handle_window_resize(Object* ball, Object* racketRight, Object* racketLeft)
     ball->rec.y = g_initBallY;
 }
 
+void draw_game_state(Object ball, Object racketLeft, Object racketRight, int scoreLeft, int scoreRight) {
+    ClearBackground(BLACK);
+
+    DrawLine(g_windowWidth / 2, 0, g_windowWidth / 2, g_windowHeight, GRAY);
+    DrawText(TextFormat("%i", scoreLeft), g_windowWidth / 2 - 50 - MeasureText(TextFormat("%i", scoreLeft), 40) / 2, 50, 40, RAYWHITE);
+    DrawText(TextFormat("%i", scoreRight), g_windowWidth / 2 + 50 - MeasureText(TextFormat("%i", scoreRight), 40) / 2, 50, 40, RAYWHITE);
+
+    DrawRectangleRec(racketLeft.rec, racketLeft.color);
+    DrawRectangleRec(racketRight.rec, racketRight.color);
+    DrawRectangleRec(ball.rec, ball.color);
+}
+
 Vector2 init_ball_velocity() {
     Vector2 ballVelocity = (Vector2){INIT_BALL_SPEED, INIT_BALL_SPEED};
     GetRandomValue(0, 1) == 1 ? ballVelocity.x = -ballVelocity.x : 1;
@@ -66,15 +78,7 @@ if (IsKeyDown(KEY_SPACE)) {
     }
     BeginDrawing();
 
-    ClearBackground(BLACK);
-
-    DrawLine(g_windowWidth / 2, 0, g_windowWidth / 2, g_windowHeight, GRAY);
-    DrawText(TextFormat("%i", scoreLeft), g_windowWidth / 2 - 50 - MeasureText(TextFormat("%i", scoreLeft), 40) / 2, 50, 40, RAYWHITE);
-    DrawText(TextFormat("%i", scoreRight), g_windowWidth / 2 + 50 - MeasureText(TextFormat("%i", scoreRight), 40) / 2, 50, 40, RAYWHITE);
-
-    DrawRectangleRec(racketLeft.rec, racketLeft.color);
-    DrawRectangleRec(racketRight.rec, racketRight.color);
-    DrawRectangleRec(ball.rec, ball.color);
+    draw_game_state(ball, racketLeft, racketRight, scoreLeft, scoreRight);
 
     DrawText("Press SPACE to play", g_windowWidth / 2 - MeasureText("Press SPACE to play", 20) / 2, 5, 20, RAYWHITE);
 
@@ -170,14 +174,8 @@ void render_game(Object ball, Object racketLeft, Object racketRight, int scoreLe
     BeginDrawing();
 
     ClearBackground(BLACK);
-
-    DrawLine(g_windowWidth / 2, 0, g_windowWidth / 2, g_windowHeight, GRAY);
-    DrawText(TextFormat("%i", scoreLeft), g_windowWidth / 2 - 50 - MeasureText(TextFormat("%i", scoreLeft), 40) / 2, 50, 40, RAYWHITE);
-    DrawText(TextFormat("%i", scoreRight), g_windowWidth / 2 + 50 - MeasureText(TextFormat("%i", scoreRight), 40) / 2, 50, 40, RAYWHITE);
-
-    DrawRectangleRec(racketLeft.rec, racketLeft.color);
-    DrawRectangleRec(racketRight.rec, racketRight.color);
-    DrawRectangleRec(ball.rec, ball.color);
+    
+    draw_game_state(ball, racketLeft, racketRight, scoreLeft, scoreRight);
 
     DrawLine(0, g_windowHeight + 1, g_windowWidth + 1, g_windowHeight + 1, GRAY);
     DrawLine(g_windowWidth + 1, 0, g_windowWidth + 1, g_windowHeight + 1, GRAY);
