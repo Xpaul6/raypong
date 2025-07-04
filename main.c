@@ -25,8 +25,8 @@ typedef enum Mode {
 #define BALL_ACCELERATION 10.0f
 
 #define NUM_MODES 2
-const Mode GAME_MODES[] = {normal, ai};
-const char* MODE_NAMES[] = {"Two players", "Versus AI"};
+const Mode GAME_MODES[] = { normal, ai };
+const char* MODE_NAMES[] = { "Two players", "Versus AI" };
 
 // Global variables
 int g_windowWidth = 800;
@@ -50,7 +50,7 @@ void calculate_window_related_variables(Rectangle menuRecs[NUM_MODES]) {
     g_initBallX = g_windowWidth / 2 - BALL_SIZE / 2;
     g_initBallY = g_windowHeight / 2 - BALL_SIZE / 2;
     for (int i = 0; i < NUM_MODES; i++) {
-        menuRecs[i] = (Rectangle){(float)g_windowWidth / 2 - 125, (float)g_windowHeight / 2 - 50 + i*80, 250, 60};
+        menuRecs[i] = (Rectangle){ (float)g_windowWidth / 2 - 125, (float)g_windowHeight / 2 - 50 + i * 80, 250, 60 };
     }
 }
 
@@ -225,7 +225,7 @@ void render_main_menu(Rectangle menuRecs[NUM_MODES], Mode* gameMode) {
 
     for (int i = 0; i < NUM_MODES; i++) {
         DrawRectangleLinesEx(menuRecs[i], 2.0f, i == hoveredRecIndex ? BLUE : RAYWHITE);
-        DrawText(MODE_NAMES[i], centerX - MeasureText(MODE_NAMES[i], textSize) / 2, centerY - 50 + i*80 + 15, textSize, i == hoveredRecIndex ? BLUE : RAYWHITE);
+        DrawText(MODE_NAMES[i], centerX - MeasureText(MODE_NAMES[i], textSize) / 2, centerY - 50 + i *80 + 15, textSize, i == hoveredRecIndex ? BLUE : RAYWHITE);
     }
 
     EndDrawing();
@@ -272,71 +272,72 @@ int main() {
             isResized = true;
         }
 
-        // Main menu handling
-        if (gameMode == unselected) {
-            SetExitKey(KEY_ESCAPE);
-            calculate_window_related_variables(menuRecs);
-            render_main_menu(menuRecs, &gameMode);
-            continue;
-        }
-        SetExitKey(KEY_NULL);
+        switch (gameMode) {
 
-        // NOTE: no ai implementaion yet
-        if (gameMode == ai) {
-            if (isResized) {
+            case (unselected):
+                SetExitKey(KEY_ESCAPE);
                 calculate_window_related_variables(menuRecs);
-            }
-            if (IsKeyPressed(KEY_ESCAPE)) {
-                gameMode = unselected;
-            }
-            BeginDrawing();
-            ClearBackground(BLACK);
-            DrawText("Work in progress", g_windowWidth / 2 - MeasureText("Work in progress", 60) / 2, g_windowHeight / 2 - 50, 60, RAYWHITE);
-            EndDrawing();
-            continue;
+                render_main_menu(menuRecs, &gameMode);
+                break;
+
+            case (ai):
+                SetExitKey(KEY_NULL);
+                if (isResized) {
+                    calculate_window_related_variables(menuRecs);
+                }
+                if (IsKeyPressed(KEY_ESCAPE)) {
+                    gameMode = unselected;
+                }
+                BeginDrawing();
+                ClearBackground(BLACK);
+                DrawText("Work in progress", g_windowWidth / 2 - MeasureText("Work in progress", 60) / 2, g_windowHeight / 2 - 50, 60, RAYWHITE);
+                EndDrawing();
+                break;
+
+            case (normal):
+                SetExitKey(KEY_NULL);
+                // Game pause handling
+                if (isPaused) {
+                    // Resize handling
+                    if (isResized) {
+                        calculate_window_related_variables(menuRecs);
+                        handle_window_resize(&ball, &racketRight, &racketLeft);
+                        isResized = false;
+                    }
+
+                    // Game escape handling
+                    if (IsKeyPressed(KEY_ESCAPE)) {
+                        gameMode = unselected;
+                        reset_game(&ball, &racketLeft, &racketRight, &ballVelocity, &isGoal, &isPaused);
+                        reset_score(&scoreLeft, &scoreRight);
+                    }
+
+                    render_pause_menu(&isPaused, ball, racketLeft, racketRight, scoreLeft, scoreRight);
+                    continue;
+                }
+                // Game process
+
+                double delta = GetFrameTime();
+
+                // Player input        
+                handle_player_input(delta, &racketLeft, &racketRight);
+
+                // Calculations
+                calc_ball_move(&ball, ballVelocity, delta);
+
+                calc_ball_screen_collision(&ball, &ballVelocity);
+
+                calc_ball_racket_collision(&ball, &racketLeft, &racketRight, &ballVelocity);
+
+                check_scoring(&ball, &scoreLeft, &scoreRight, &isGoal);
+                if (isGoal) {
+                    reset_game(&ball, &racketLeft, &racketRight, &ballVelocity, &isGoal, &isPaused);
+                }
+
+                // Render
+                render_game(ball, racketLeft, racketRight, scoreLeft, scoreRight);
+                break;
         }
-
-        // Game pause handling
-        if (isPaused) {
-            // Resize handling
-            if (isResized) {
-                calculate_window_related_variables(menuRecs);
-                handle_window_resize(&ball, &racketRight, &racketLeft);
-                isResized = false;
-            }
-
-            // Game escape handling
-            if (IsKeyPressed(KEY_ESCAPE)) {
-                gameMode = unselected;
-                reset_game(&ball, &racketLeft, &racketRight, &ballVelocity, &isGoal, &isPaused);
-                reset_score(&scoreLeft, &scoreRight);
-            }
-
-            render_pause_menu(&isPaused, ball, racketLeft, racketRight, scoreLeft, scoreRight);
-            continue;
-        }
-
-        // Game process
-
-        double delta = GetFrameTime();
-
-        // Player input        
-        handle_player_input(delta, &racketLeft, &racketRight);
-
-        // Calculations
-        calc_ball_move(&ball, ballVelocity, delta);
-
-        calc_ball_screen_collision(&ball, &ballVelocity);
-
-        calc_ball_racket_collision(&ball, &racketLeft, &racketRight, &ballVelocity);
-
-        check_scoring(&ball, &scoreLeft, &scoreRight, &isGoal);
-        if (isGoal) {
-            reset_game(&ball, &racketLeft, &racketRight, &ballVelocity, &isGoal, &isPaused);
-        }
-
-        // Render
-        render_game(ball, racketLeft, racketRight, scoreLeft, scoreRight);
     }
 
     CloseWindow();
