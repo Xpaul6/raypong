@@ -258,12 +258,13 @@ void render_main_menu(GameState* gameState) {
 // Entry point
 int main() {
     GameState gameState = init_game_state();
-    calculate_window_related_variables(&gameState);
 
     // Window init
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(gameState.windowWidth, gameState.windowHeight, WINDOW_NAME); 
     SetTargetFPS(TARGET_FPS);
+
+    calculate_window_related_variables(&gameState);
 
     // Main game loop
     while(!WindowShouldClose()) {
