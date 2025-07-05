@@ -3,6 +3,16 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+// Constants
+#define TARGET_FPS 60
+#define WINDOW_NAME "raypong"
+#define RACKET_SPEED 300.0f
+#define RACKET_HEIGHT 100
+#define RACKET_WIDTH 10
+#define BALL_SIZE 15
+#define INIT_BALL_SPEED 300.0f
+#define BALL_ACCELERATION 10.0f
+
 // Typedefs
 typedef struct Object {
     Rectangle rec;
@@ -15,69 +25,33 @@ typedef enum Mode {
     unselected
 } Mode;
 
-// Constants
-#define TARGET_FPS 60
-#define WINDOW_NAME "raypong"
-#define RACKET_SPEED 300.0f
-#define RACKET_HEIGHT 100
-#define RACKET_WIDTH 10
-#define BALL_SIZE 15
-#define INIT_BALL_SPEED 300.0f
-#define BALL_ACCELERATION 10.0f
-
 #define NUM_MODES 2
 const Mode GAME_MODES[] = { normal, ai };
 const char* MODE_NAMES[] = { "Two players", "Versus AI" };
 
-// Global variables
-int g_windowWidth = 800;
-int g_windowHeight = 600;
-int g_initRacketLeftX;
-int g_initRacketLeftY;
-int g_initRacketRightX;
-int g_initRacketRightY;
-int g_initBallX;
-int g_initBallY;
+typedef struct GameState {
+    int windowWidth;
+    int windowHeight;
+    int initRacketLeftX;
+    int initRacketLeftY;
+    int initRacketRightX;
+    int initRacketRightY;
+    int initBallX;
+    int initBallY;
+    int scoreLeft;
+    int scoreRight;
+    bool isGoal;
+    Vector2 ballVelocity;
+    bool isPaused;
+    bool isResized;
+    Mode gameMode;
+    Rectangle menuRecs[NUM_MODES];
+    Object racketLeft;
+    Object racketRight;
+    Object ball;
+} GameState;
 
 // Functions
-
-void calculate_window_related_variables(Rectangle menuRecs[NUM_MODES]) {
-    g_windowWidth = GetScreenWidth();
-    g_windowHeight = GetScreenHeight();
-    g_initRacketLeftX = 0;
-    g_initRacketLeftY = g_windowHeight / 2 - RACKET_HEIGHT / 2;
-    g_initRacketRightX = g_windowWidth - RACKET_WIDTH;
-    g_initRacketRightY = g_windowHeight / 2 - RACKET_HEIGHT / 2;
-    g_initBallX = g_windowWidth / 2 - BALL_SIZE / 2;
-    g_initBallY = g_windowHeight / 2 - BALL_SIZE / 2;
-    for (int i = 0; i < NUM_MODES; i++) {
-        menuRecs[i] = (Rectangle){ (float)g_windowWidth / 2 - 125, (float)g_windowHeight / 2 - 50 + i * 80, 250, 60 };
-    }
-}
-
-void handle_window_resize(Object* ball, Object* racketRight, Object* racketLeft) {
-    racketRight->rec.x = g_initRacketRightX;
-    racketRight->rec.y = g_initRacketRightY;
-
-    racketLeft->rec.x = g_initRacketLeftX;
-    racketLeft->rec.y = g_initRacketLeftY;
-
-    ball->rec.x = g_initBallX;
-    ball->rec.y = g_initBallY;
-}
-
-void draw_game_state(Object ball, Object racketLeft, Object racketRight, int scoreLeft, int scoreRight) {
-    ClearBackground(BLACK);
-
-    DrawLine(g_windowWidth / 2, 0, g_windowWidth / 2, g_windowHeight, GRAY);
-    DrawText(TextFormat("%i", scoreLeft), g_windowWidth / 2 - 50 - MeasureText(TextFormat("%i", scoreLeft), 40) / 2, 50, 40, RAYWHITE);
-    DrawText(TextFormat("%i", scoreRight), g_windowWidth / 2 + 50 - MeasureText(TextFormat("%i", scoreRight), 40) / 2, 50, 40, RAYWHITE);
-
-    DrawRectangleRec(racketLeft.rec, racketLeft.color);
-    DrawRectangleRec(racketRight.rec, racketRight.color);
-    DrawRectangleRec(ball.rec, ball.color);
-}
-
 Vector2 init_ball_velocity() {
     Vector2 ballVelocity = (Vector2){INIT_BALL_SPEED, INIT_BALL_SPEED};
     GetRandomValue(0, 1) == 1 ? ballVelocity.x = -ballVelocity.x : 1;
@@ -85,117 +59,187 @@ Vector2 init_ball_velocity() {
     return ballVelocity;
 }
 
-void render_pause_menu(bool* isPaused, Object ball, Object racketLeft, Object racketRight, int scoreLeft, int scoreRight) {
+GameState init_game_state() {
+    GameState gameState = {
+        .windowWidth = 800,
+        .windowHeight = 600,
+        .scoreLeft = 0,
+        .scoreRight = 0,
+        .isGoal = false,
+        .ballVelocity = init_ball_velocity(),
+        .isPaused = true,
+        .isResized = false,
+        .gameMode = unselected,
+        .menuRecs = {0},
+    };
+    gameState.initRacketLeftY = gameState.windowHeight / 2 - RACKET_HEIGHT / 2;
+    gameState.initRacketRightX = gameState.windowWidth - RACKET_WIDTH;
+    gameState.initRacketRightY = gameState.windowHeight / 2 - RACKET_HEIGHT / 2;
+    gameState.initBallX = gameState.windowWidth / 2 - BALL_SIZE / 2;
+    gameState.initBallY = gameState.windowHeight / 2 - BALL_SIZE / 2;
+    gameState.racketLeft = (Object){
+        { gameState.initRacketLeftX, gameState.initRacketLeftY, RACKET_WIDTH, RACKET_HEIGHT },
+        RAYWHITE
+    };
+    gameState.racketRight = (Object){
+        { gameState.initRacketRightX, gameState.initRacketRightY, RACKET_WIDTH, RACKET_HEIGHT },
+        RAYWHITE
+    };
+    gameState.ball = (Object){
+        { gameState.initBallX, gameState.initBallY, BALL_SIZE, BALL_SIZE },
+        RAYWHITE
+    };
+    return gameState;
+}
+
+void calculate_window_related_variables(GameState* gameState) {
+    gameState->windowWidth = GetScreenWidth();
+    gameState->windowHeight = GetScreenHeight();
+    gameState->initRacketLeftX = 0;
+    gameState->initRacketLeftY = gameState->windowHeight / 2 - RACKET_HEIGHT / 2;
+    gameState->initRacketRightX = gameState->windowWidth - RACKET_WIDTH;
+    gameState->initRacketRightY = gameState->windowHeight / 2 - RACKET_HEIGHT / 2;
+    gameState->initBallX = gameState->windowWidth / 2 - BALL_SIZE / 2;
+    gameState->initBallY = gameState->windowHeight / 2 - BALL_SIZE / 2;
+    for (int i = 0; i < NUM_MODES; i++) {
+        gameState->menuRecs[i] = (Rectangle){ (float)gameState->windowWidth / 2 - 125, (float)gameState->windowHeight / 2 - 50 + i * 80, 250, 60 };
+    }
+}
+
+void handle_window_resize(GameState* gameState) {
+    gameState->racketRight.rec.x = gameState->initRacketRightX;
+    gameState->racketRight.rec.y = gameState->initRacketRightY;
+
+    gameState->racketLeft.rec.x = gameState->initRacketLeftX;
+    gameState->racketLeft.rec.y = gameState->initRacketLeftY;
+
+    gameState->ball.rec.x = gameState->initBallX;
+    gameState->ball.rec.y = gameState->initBallY;
+}
+
+void draw_game_state(const GameState* gameState) {
+    ClearBackground(BLACK);
+
+    DrawLine(gameState->windowWidth / 2, 0, gameState->windowWidth / 2, gameState->windowHeight, GRAY);
+    DrawText(TextFormat("%i", gameState->scoreLeft), gameState->windowWidth / 2 - 50 - MeasureText(TextFormat("%i", gameState->scoreLeft), 40) / 2, 50, 40, RAYWHITE);
+    DrawText(TextFormat("%i", gameState->scoreRight), gameState->windowWidth / 2 + 50 - MeasureText(TextFormat("%i", gameState->scoreRight), 40) / 2, 50, 40, RAYWHITE);
+
+    DrawRectangleRec(gameState->racketLeft.rec, gameState->racketLeft.color);
+    DrawRectangleRec(gameState->racketRight.rec, gameState->racketRight.color);
+    DrawRectangleRec(gameState->ball.rec, gameState->ball.color);
+}
+
+void render_pause_menu(GameState* gameState) {
     if (IsKeyDown(KEY_SPACE)) {
-        *isPaused = false;
+        gameState->isPaused = false;
         return;
     }
     BeginDrawing();
 
-    draw_game_state(ball, racketLeft, racketRight, scoreLeft, scoreRight);
+    draw_game_state(gameState);
 
-    DrawText("Press SPACE to play", g_windowWidth / 2 - MeasureText("Press SPACE to play", 20) / 2, 5, 20, RAYWHITE);
+    DrawText("Press SPACE to play", gameState->windowWidth / 2 - MeasureText("Press SPACE to play", 20) / 2, 5, 20, RAYWHITE);
 
     EndDrawing();
 }
 
-void handle_player_input(float delta, Object* racketLeft, Object* racketRight) {
+void handle_player_input(GameState* gameState, float delta) {
     // Left Racket
-    if (IsKeyDown('S')) racketLeft->rec.y += RACKET_SPEED * delta;
-    if (IsKeyDown('W')) racketLeft->rec.y -= RACKET_SPEED * delta;
-    racketLeft->rec.y = Clamp(racketLeft->rec.y, 0, g_windowHeight - RACKET_HEIGHT);
+    if (IsKeyDown('S')) gameState->racketLeft.rec.y += RACKET_SPEED * delta;
+    if (IsKeyDown('W')) gameState->racketLeft.rec.y -= RACKET_SPEED * delta;
+    gameState->racketLeft.rec.y = Clamp(gameState->racketLeft.rec.y, 0, gameState->windowHeight - RACKET_HEIGHT);
 
     // Right racket
-    if (IsKeyDown(KEY_DOWN)) racketRight->rec.y += RACKET_SPEED * delta;
-    if (IsKeyDown(KEY_UP)) racketRight->rec.y -= RACKET_SPEED * delta;
-    racketRight->rec.y = Clamp(racketRight->rec.y, 0, g_windowHeight - RACKET_HEIGHT);
+    if (IsKeyDown(KEY_DOWN)) gameState->racketRight.rec.y += RACKET_SPEED * delta;
+    if (IsKeyDown(KEY_UP)) gameState->racketRight.rec.y -= RACKET_SPEED * delta;
+    gameState->racketRight.rec.y = Clamp(gameState->racketRight.rec.y, 0, gameState->windowHeight - RACKET_HEIGHT);
 }
 
-void calc_ball_move(Object* ball, Vector2 ballVelocity, double delta) {
-    ball->rec.x += ballVelocity.x * delta;
-    ball->rec.y += ballVelocity.y * delta;
+void calc_ball_move(GameState* gameState, float delta) {
+    gameState->ball.rec.x += gameState->ballVelocity.x * delta;
+    gameState->ball.rec.y += gameState->ballVelocity.y * delta;
 }
 
-void calc_ball_screen_collision(Object* ball, Vector2* ballVelocity) {
-    if (ball->rec.y <= 0) {
-        ball->rec.y = 0;
-        ballVelocity->y *= -1;
+void calc_ball_screen_collision(GameState* gameState) {
+    if (gameState->ball.rec.y <= 0) {
+        gameState->ball.rec.y = 0;
+        gameState->ballVelocity.y *= -1;
     }
-    if (ball->rec.y >= g_windowHeight - BALL_SIZE) {
-        ball->rec.y = g_windowHeight - BALL_SIZE;
-        ballVelocity->y *= -1;
-    }
-}
-
-void calc_ball_racket_collision(Object* ball, Object* racketLeft, Object* racketRight, Vector2* ballVelocity) {
-    if (CheckCollisionRecs(ball->rec, racketLeft->rec)) {
-        ball->rec.x = 0 + RACKET_WIDTH;
-        ballVelocity->x *= -1;
-        ballVelocity->x += BALL_ACCELERATION;
-        ballVelocity->y += (ballVelocity->y > 0) ? BALL_ACCELERATION : -BALL_ACCELERATION;
-    }
-    if (CheckCollisionRecs(ball->rec, racketRight->rec)) {
-        ball->rec.x = g_windowWidth - RACKET_WIDTH - BALL_SIZE;
-        ballVelocity->x += BALL_ACCELERATION;
-        ballVelocity->x *= -1;
-        ballVelocity->y += (ballVelocity->y > 0) ? BALL_ACCELERATION : -BALL_ACCELERATION;
+    if (gameState->ball.rec.y >= gameState->windowHeight - BALL_SIZE) {
+        gameState->ball.rec.y = gameState->windowHeight - BALL_SIZE;
+       gameState-> ballVelocity.y *= -1;
     }
 }
 
-void check_scoring(Object* ball, int* scoreLeft, int* scoreRight, bool* isGoal) {
-    if (ball->rec.x + BALL_SIZE < 0) {
-        *scoreRight += 1;
-        *isGoal = true;
+void calc_ball_racket_collision(GameState* gameState) {
+    if (CheckCollisionRecs(gameState->ball.rec, gameState->racketLeft.rec)) {
+        gameState->ball.rec.x = 0 + RACKET_WIDTH;
+        gameState->ballVelocity.x *= -1;
+        gameState->ballVelocity.x += BALL_ACCELERATION;
+        gameState->ballVelocity.y += (gameState->ballVelocity.y > 0) ? BALL_ACCELERATION : -BALL_ACCELERATION;
     }
-    if (ball->rec.x > g_windowWidth) {
-        *scoreLeft += 1;
-        *isGoal = true;
+    if (CheckCollisionRecs(gameState->ball.rec, gameState->racketRight.rec)) {
+        gameState->ball.rec.x = gameState->windowWidth - RACKET_WIDTH - BALL_SIZE;
+        gameState->ballVelocity.x += BALL_ACCELERATION;
+        gameState->ballVelocity.x *= -1;
+        gameState->ballVelocity.y += (gameState->ballVelocity.y > 0) ? BALL_ACCELERATION : -BALL_ACCELERATION;
     }
 }
 
-void reset_game(Object* ball, Object* racketLeft, Object* racketRight, Vector2* ballVelocity, bool* isGoal, bool* isPaused) {
-    ball->rec.x = g_initBallX;
-    ball->rec.y = g_initBallY;
-    *ballVelocity = init_ball_velocity();
-
-    racketLeft->rec.x = g_initRacketLeftX;
-    racketLeft->rec.y = g_initRacketLeftY;
-    racketRight->rec.x = g_initRacketRightX;
-    racketRight->rec.y = g_initRacketRightY;
-    *isGoal = false;
-    *isPaused = true;
+void check_scoring(GameState* gameState) {
+    if (gameState->ball.rec.x + BALL_SIZE < 0) {
+        gameState->scoreRight += 1;
+        gameState->isGoal = true;
+    }
+    if (gameState->ball.rec.x > gameState->windowWidth) {
+        gameState->scoreLeft += 1;
+        gameState->isGoal = true;
+    }
 }
 
-void reset_score(int* scoreLeft, int* scoreRight) {
-    *scoreLeft = 0;
-    *scoreRight = 0;
+void reset_game(GameState* gameState) {
+    gameState->ball.rec.x = gameState->initBallX;
+    gameState->ball.rec.y = gameState->initBallY;
+    gameState->ballVelocity = init_ball_velocity();
+
+    gameState->racketLeft.rec.x = gameState->initRacketLeftX;
+    gameState->racketLeft.rec.y = gameState->initRacketLeftY;
+    gameState->racketRight.rec.x = gameState->initRacketRightX;
+    gameState->racketRight.rec.y = gameState->initRacketRightY;
+    gameState->isGoal = false;
+    gameState->isPaused = true;
 }
 
-void render_game(Object ball, Object racketLeft, Object racketRight, int scoreLeft, int scoreRight) {
+void reset_score(GameState* gameState) {
+    gameState->scoreLeft = 0;
+    gameState->scoreRight = 0;
+}
+
+void render_game(const GameState* gameState) {
     BeginDrawing();
 
     ClearBackground(BLACK);
     
-    draw_game_state(ball, racketLeft, racketRight, scoreLeft, scoreRight);
+    draw_game_state(gameState);
 
-    DrawLine(0, g_windowHeight + 1, g_windowWidth + 1, g_windowHeight + 1, GRAY);
-    DrawLine(g_windowWidth + 1, 0, g_windowWidth + 1, g_windowHeight + 1, GRAY);
+    DrawLine(0, gameState->windowHeight + 1, gameState->windowWidth + 1, gameState->windowHeight + 1, GRAY);
+    DrawLine(gameState->windowWidth + 1, 0, gameState->windowWidth + 1, gameState->windowHeight + 1, GRAY);
 
     EndDrawing();
 }
 
-void render_main_menu(Rectangle menuRecs[NUM_MODES], Mode* gameMode) {
-    int centerX = g_windowWidth / 2;
-    int centerY = g_windowHeight / 2;
+void render_main_menu(GameState* gameState) {
+    int centerX = gameState->windowWidth / 2;
+    int centerY = gameState->windowHeight / 2;
     int headerSize = 60;
     int textSize = 30;
     int hoveredRecIndex = -1;
 
     for (int i = 0; i < NUM_MODES; i++) {
-        if (CheckCollisionPointRec(GetMousePosition(), menuRecs[i])) {
+        if (CheckCollisionPointRec(GetMousePosition(), gameState->menuRecs[i])) {
             hoveredRecIndex = i;
             if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-                *gameMode = GAME_MODES[i];
+                gameState->gameMode = GAME_MODES[i];
             }
         }
     }
@@ -207,7 +251,7 @@ void render_main_menu(Rectangle menuRecs[NUM_MODES], Mode* gameMode) {
     DrawText("raypong", centerX - MeasureText("raypong", headerSize) / 2, centerY - 200, headerSize, RAYWHITE);
 
     for (int i = 0; i < NUM_MODES; i++) {
-        DrawRectangleLinesEx(menuRecs[i], 2.0f, i == hoveredRecIndex ? BLUE : RAYWHITE);
+        DrawRectangleLinesEx(gameState->menuRecs[i], 2.0f, i == hoveredRecIndex ? BLUE : RAYWHITE);
         DrawText(MODE_NAMES[i], centerX - MeasureText(MODE_NAMES[i], textSize) / 2, centerY - 50 + i *80 + 15, textSize, i == hoveredRecIndex ? BLUE : RAYWHITE);
     }
 
@@ -216,86 +260,61 @@ void render_main_menu(Rectangle menuRecs[NUM_MODES], Mode* gameMode) {
 
 // Entry point
 int main() {
+    GameState gameState = init_game_state();
+
     // Window init
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(g_windowWidth, g_windowHeight, WINDOW_NAME); 
+    InitWindow(gameState.windowWidth, gameState.windowHeight, WINDOW_NAME); 
     SetTargetFPS(TARGET_FPS);
 
-    // Variables definition
-    int scoreLeft = 0;
-    int scoreRight = 0;
-    bool isGoal = false;
-    Vector2 ballVelocity = init_ball_velocity();
-    bool isPaused = true;
-    bool isResized = false;
-    Mode gameMode = unselected;
-    Rectangle menuRecs[NUM_MODES] = {0};
-
-    calculate_window_related_variables(menuRecs);
-
-    // Objects init
-    Object racketLeft = {
-        { g_initRacketLeftX, g_initRacketLeftY, RACKET_WIDTH, RACKET_HEIGHT },
-        RAYWHITE
-    };
-
-    Object racketRight = {
-        { g_initRacketRightX, g_initRacketRightY, RACKET_WIDTH, RACKET_HEIGHT },
-        RAYWHITE
-    };
-
-    Object ball = {
-        { g_initBallX, g_initBallY, BALL_SIZE, BALL_SIZE },
-        RAYWHITE
-    };
+    calculate_window_related_variables(&gameState);
 
     // Main game loop
     while(!WindowShouldClose()) {
         if (IsWindowResized()) {
-            isResized = true;
+            gameState.isResized = true;
         }
 
-        switch (gameMode) {
-
+        switch (gameState.gameMode) {
             case (unselected):
                 SetExitKey(KEY_ESCAPE);
-                calculate_window_related_variables(menuRecs);
-                render_main_menu(menuRecs, &gameMode);
+                calculate_window_related_variables(&gameState);
+                render_main_menu(&gameState);
                 break;
 
             case (ai):
                 SetExitKey(KEY_NULL);
-                if (isResized) {
-                    calculate_window_related_variables(menuRecs);
+                if (gameState.isResized) {
+                    calculate_window_related_variables(&gameState);
                 }
                 if (IsKeyPressed(KEY_ESCAPE)) {
-                    gameMode = unselected;
+                    gameState.gameMode = unselected;
                 }
                 BeginDrawing();
                 ClearBackground(BLACK);
-                DrawText("Work in progress", g_windowWidth / 2 - MeasureText("Work in progress", 60) / 2, g_windowHeight / 2 - 50, 60, RAYWHITE);
+                DrawText("Work in progress", gameState.windowWidth / 2 - MeasureText("Work in progress", 60) / 2, gameState.windowHeight / 2 - 50, 60, RAYWHITE);
                 EndDrawing();
                 break;
 
             case (normal):
                 SetExitKey(KEY_NULL);
                 // Game pause handling
-                if (isPaused) {
+                if (gameState.isPaused) {
                     // Resize handling
-                    if (isResized) {
-                        calculate_window_related_variables(menuRecs);
-                        handle_window_resize(&ball, &racketRight, &racketLeft);
-                        isResized = false;
+                    if (gameState.isResized) {
+                        calculate_window_related_variables(&gameState);
+                        handle_window_resize(&gameState);
+                        gameState.isResized = false;
                     }
 
                     // Game escape handling
                     if (IsKeyPressed(KEY_ESCAPE)) {
-                        gameMode = unselected;
-                        reset_game(&ball, &racketLeft, &racketRight, &ballVelocity, &isGoal, &isPaused);
-                        reset_score(&scoreLeft, &scoreRight);
+                        gameState.gameMode = unselected;
+                        reset_game(&gameState);
+                        reset_score(&gameState);
                     }
 
-                    render_pause_menu(&isPaused, ball, racketLeft, racketRight, scoreLeft, scoreRight);
+                    render_pause_menu(&gameState);
                     continue;
                 }
                 // Game process
@@ -303,22 +322,22 @@ int main() {
                 double delta = GetFrameTime();
 
                 // Player input        
-                handle_player_input(delta, &racketLeft, &racketRight);
+                handle_player_input(&gameState, delta);
 
                 // Calculations
-                calc_ball_move(&ball, ballVelocity, delta);
+                calc_ball_move(&gameState, delta);
 
-                calc_ball_screen_collision(&ball, &ballVelocity);
+                calc_ball_screen_collision(&gameState);
 
-                calc_ball_racket_collision(&ball, &racketLeft, &racketRight, &ballVelocity);
+                calc_ball_racket_collision(&gameState);
 
-                check_scoring(&ball, &scoreLeft, &scoreRight, &isGoal);
-                if (isGoal) {
-                    reset_game(&ball, &racketLeft, &racketRight, &ballVelocity, &isGoal, &isPaused);
+                check_scoring(&gameState);
+                if (gameState.isGoal) {
+                    reset_game(&gameState);
                 }
 
                 // Render
-                render_game(ball, racketLeft, racketRight, scoreLeft, scoreRight);
+                render_game(&gameState);
                 break;
         }
     }
