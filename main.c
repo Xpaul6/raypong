@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-// Constants
+// Constants & typedefs
 #define TARGET_FPS 60
 #define WINDOW_NAME "raypong"
 #define RACKET_SPEED 300.0f
@@ -13,7 +13,6 @@
 #define INIT_BALL_SPEED 300.0f
 #define BALL_ACCELERATION 10.0f
 
-// Typedefs
 typedef struct Object {
     Rectangle rec;
     Color color;
@@ -259,13 +258,12 @@ void render_main_menu(GameState* gameState) {
 // Entry point
 int main() {
     GameState gameState = init_game_state();
+    calculate_window_related_variables(&gameState);
 
     // Window init
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(gameState.windowWidth, gameState.windowHeight, WINDOW_NAME); 
     SetTargetFPS(TARGET_FPS);
-
-    calculate_window_related_variables(&gameState);
 
     // Main game loop
     while(!WindowShouldClose()) {
@@ -293,9 +291,7 @@ int main() {
 
             case (normal):
                 SetExitKey(KEY_NULL);
-                // Game pause handling
                 if (gameState.isPaused) {
-                    // Game escape handling
                     if (IsKeyPressed(KEY_ESCAPE)) {
                         gameState.gameMode = unselected;
                         reset_game(&gameState);
@@ -305,6 +301,7 @@ int main() {
                     render_pause_menu(&gameState);
                     continue;
                 }
+
                 // Game process
 
                 double delta = GetFrameTime();
@@ -314,12 +311,10 @@ int main() {
 
                 // Calculations
                 calc_ball_move(&gameState, delta);
-
                 calc_ball_screen_collision(&gameState);
-
                 calc_ball_racket_collision(&gameState);
-
                 check_scoring(&gameState);
+
                 if (gameState.isGoal) {
                     reset_game(&gameState);
                 }
