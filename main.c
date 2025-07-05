@@ -43,7 +43,6 @@ typedef struct GameState {
     bool isGoal;
     Vector2 ballVelocity;
     bool isPaused;
-    bool isResized;
     Mode gameMode;
     Rectangle menuRecs[NUM_MODES];
     Object racketLeft;
@@ -68,7 +67,6 @@ GameState init_game_state() {
         .isGoal = false,
         .ballVelocity = init_ball_velocity(),
         .isPaused = true,
-        .isResized = false,
         .gameMode = unselected,
         .menuRecs = {0},
     };
@@ -272,21 +270,18 @@ int main() {
     // Main game loop
     while(!WindowShouldClose()) {
         if (IsWindowResized()) {
-            gameState.isResized = true;
+            calculate_window_related_variables(&gameState);
+            handle_window_resize(&gameState);
         }
 
         switch (gameState.gameMode) {
             case (unselected):
                 SetExitKey(KEY_ESCAPE);
-                calculate_window_related_variables(&gameState);
                 render_main_menu(&gameState);
                 break;
 
             case (ai):
                 SetExitKey(KEY_NULL);
-                if (gameState.isResized) {
-                    calculate_window_related_variables(&gameState);
-                }
                 if (IsKeyPressed(KEY_ESCAPE)) {
                     gameState.gameMode = unselected;
                 }
@@ -300,13 +295,6 @@ int main() {
                 SetExitKey(KEY_NULL);
                 // Game pause handling
                 if (gameState.isPaused) {
-                    // Resize handling
-                    if (gameState.isResized) {
-                        calculate_window_related_variables(&gameState);
-                        handle_window_resize(&gameState);
-                        gameState.isResized = false;
-                    }
-
                     // Game escape handling
                     if (IsKeyPressed(KEY_ESCAPE)) {
                         gameState.gameMode = unselected;
