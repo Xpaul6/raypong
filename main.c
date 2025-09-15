@@ -164,7 +164,7 @@ void calc_ball_screen_collision(GameState* gameState) {
     }
     if (gameState->ball.rec.y >= gameState->windowHeight - BALL_SIZE) {
         gameState->ball.rec.y = gameState->windowHeight - BALL_SIZE;
-       gameState-> ballVelocity.y *= -1;
+        gameState->ballVelocity.y *= -1;
     }
 }
 
@@ -274,12 +274,13 @@ int main() {
         }
 
         switch (gameState.gameMode) {
-            case (unselected):
+            case(unselected):
                 SetExitKey(KEY_ESCAPE);
                 render_main_menu(&gameState);
                 break;
 
-            case (ai):
+            case(ai):
+                // TODO
                 SetExitKey(KEY_NULL);
                 if (IsKeyPressed(KEY_ESCAPE)) {
                     gameState.gameMode = unselected;
@@ -290,7 +291,7 @@ int main() {
                 EndDrawing();
                 break;
 
-            case (normal):
+            case(normal):
                 SetExitKey(KEY_NULL);
                 if (gameState.isPaused) {
                     if (IsKeyPressed(KEY_ESCAPE)) {
