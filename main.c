@@ -147,8 +147,21 @@ void handle_player_input(GameState* gameState, float delta) {
     gameState->racketLeft.rec.y = Clamp(gameState->racketLeft.rec.y, 0, gameState->windowHeight - RACKET_HEIGHT);
 
     // Right racket
-    if (IsKeyDown(KEY_DOWN)) gameState->racketRight.rec.y += RACKET_SPEED * delta;
-    if (IsKeyDown(KEY_UP)) gameState->racketRight.rec.y -= RACKET_SPEED * delta;
+    if (gameState->gameMode != ai) {
+        if (IsKeyDown(KEY_DOWN)) gameState->racketRight.rec.y += RACKET_SPEED * delta;
+        if (IsKeyDown(KEY_UP)) gameState->racketRight.rec.y -= RACKET_SPEED * delta;
+        gameState->racketRight.rec.y = Clamp(gameState->racketRight.rec.y, 0, gameState->windowHeight - RACKET_HEIGHT);
+    }
+}
+
+void handle_ai_move(GameState* gameState, float delta) {
+    int target_y = gameState->ball.rec.y + RACKET_HEIGHT / 2 - BALL_SIZE / 2;  
+    int racket_center_y = gameState->racketRight.rec.y + RACKET_HEIGHT / 2;
+    if (racket_center_y > target_y) {
+        gameState->racketRight.rec.y -= RACKET_SPEED * delta;
+    } else if (racket_center_y < target_y) {
+        gameState->racketRight.rec.y += RACKET_SPEED * delta;
+    }
     gameState->racketRight.rec.y = Clamp(gameState->racketRight.rec.y, 0, gameState->windowHeight - RACKET_HEIGHT);
 }
 
@@ -180,6 +193,7 @@ void calc_ball_racket_collision(GameState* gameState) {
         gameState->ballVelocity.x += BALL_ACCELERATION;
         gameState->ballVelocity.x *= -1;
         gameState->ballVelocity.y += (gameState->ballVelocity.y > 0) ? BALL_ACCELERATION : -BALL_ACCELERATION;
+        gameState-> isPaused = true;
     }
 }
 
@@ -282,13 +296,43 @@ int main() {
             case(ai):
                 // TODO
                 SetExitKey(KEY_NULL);
-                if (IsKeyPressed(KEY_ESCAPE)) {
-                    gameState.gameMode = unselected;
+                if (gameState.isPaused) {
+                    if (IsKeyPressed(KEY_ESCAPE)) {
+                        gameState.gameMode = unselected;
+                        reset_game(&gameState);
+                        reset_score(&gameState);
+                    }
+
+                    render_pause_menu(&gameState);
+                    continue;
                 }
-                BeginDrawing();
-                ClearBackground(BLACK);
-                DrawText("Work in progress", gameState.windowWidth / 2 - MeasureText("Work in progress", 60) / 2, gameState.windowHeight / 2 - 50, 60, RAYWHITE);
-                EndDrawing();
+
+                // TODO
+                // BeginDrawing();
+                // ClearBackground(BLACK);
+                // DrawText("Work in progress", gameState.windowWidth / 2 - MeasureText("Work in progress", 60) / 2, gameState.windowHeight / 2 - 50, 60, RAYWHITE);
+                // EndDrawing();
+                //
+                // Game process
+
+                double delta_a = GetFrameTime();
+
+                // Player input        
+                handle_player_input(&gameState, delta_a);
+                handle_ai_move(&gameState, delta_a);
+
+                // Calculations
+                calc_ball_move(&gameState, delta_a);
+                calc_ball_screen_collision(&gameState);
+                calc_ball_racket_collision(&gameState);
+                check_scoring(&gameState);
+
+                if (gameState.isGoal) {
+                    reset_game(&gameState);
+                }
+
+                // Render
+                render_game(&gameState);
                 break;
 
             case(normal):
@@ -306,13 +350,13 @@ int main() {
 
                 // Game process
 
-                double delta = GetFrameTime();
+                double delta_n = GetFrameTime();
 
                 // Player input        
-                handle_player_input(&gameState, delta);
+                handle_player_input(&gameState, delta_n);
 
                 // Calculations
-                calc_ball_move(&gameState, delta);
+                calc_ball_move(&gameState, delta_n);
                 calc_ball_screen_collision(&gameState);
                 calc_ball_racket_collision(&gameState);
                 check_scoring(&gameState);
