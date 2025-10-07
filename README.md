@@ -12,6 +12,6 @@ Compile and run the game with `make run` command. Warning: compilation on window
 
 ## ToDo
  - [x] Main GUI menu
- - [ ] Versus AI mode
+ - [x] Versus AI mode
  - [ ] Deep refactoring
 
