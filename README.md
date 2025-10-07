@@ -14,4 +14,5 @@ Compile and run the game with `make run` command. Warning: compilation on window
  - [x] Main GUI menu
  - [x] Versus AI mode
  - [ ] Deep refactoring
+ - [ ] Make ai more "humane" and actually beatable
 
