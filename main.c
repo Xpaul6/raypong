@@ -2,6 +2,7 @@
 #include "include/raymath.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // Constants & typedefs
 #define TARGET_FPS 60
@@ -47,6 +48,7 @@ typedef struct GameState {
     Object racketLeft;
     Object racketRight;
     Object ball;
+    int predictedBallY;
 } GameState;
 
 // Functions
@@ -69,6 +71,7 @@ GameState init_game_state() {
         .gameMode = unselected,
         .menuRecs = {0},
     };
+    gameState.predictedBallY = gameState.windowHeight / 2 - RACKET_HEIGHT / 2;
     gameState.initRacketLeftY = gameState.windowHeight / 2 - RACKET_HEIGHT / 2;
     gameState.initRacketRightX = gameState.windowWidth - RACKET_WIDTH;
     gameState.initRacketRightY = gameState.windowHeight / 2 - RACKET_HEIGHT / 2;
@@ -155,14 +158,36 @@ void handle_player_input(GameState* gameState, float delta) {
 }
 
 void handle_ai_move(GameState* gameState, float delta) {
-    int target_y = gameState->ball.rec.y + RACKET_HEIGHT / 2 - BALL_SIZE / 2;  
-    int racket_center_y = gameState->racketRight.rec.y + RACKET_HEIGHT / 2;
-    if (racket_center_y > target_y) {
-        gameState->racketRight.rec.y -= RACKET_SPEED * delta;
-    } else if (racket_center_y < target_y) {
-        gameState->racketRight.rec.y += RACKET_SPEED * delta;
-    }
+    float racket_center = gameState->racketRight.rec.y + RACKET_HEIGHT / 2;
+
+    if (racket_center < gameState->predictedBallY) gameState->racketRight.rec.y += RACKET_SPEED * delta;
+    if (racket_center > gameState->predictedBallY) gameState->racketRight.rec.y -= RACKET_SPEED * delta;
+
     gameState->racketRight.rec.y = Clamp(gameState->racketRight.rec.y, 0, gameState->windowHeight - RACKET_HEIGHT);
+}
+
+void calc_ai_move(GameState* gameState) {
+    float distanceX = gameState->racketRight.rec.x - gameState->ball.rec.x;
+    float timeToRacket = fabsf(distanceX / gameState->ballVelocity.x);
+    float remTime = timeToRacket;
+    float Y = gameState->ball.rec.y;
+    float Vy = gameState->ballVelocity.y;
+    float timeToBounce;
+
+    while (remTime > 0) {
+        if (Vy > 0) timeToBounce = (gameState->windowHeight - BALL_SIZE - Y) / Vy;
+        else timeToBounce = (0 - Y) / Vy;
+
+        if (timeToBounce >= remTime) {
+            gameState->predictedBallY = Y + Vy * remTime;
+            break;
+        }
+        else {
+            remTime -= timeToBounce;
+            Y += timeToBounce * Vy;
+            Vy *= -1;
+        }
+    }
 }
 
 void calc_ball_move(GameState* gameState, float delta) {
@@ -187,13 +212,14 @@ void calc_ball_racket_collision(GameState* gameState) {
         gameState->ballVelocity.x *= -1;
         gameState->ballVelocity.x += BALL_ACCELERATION;
         gameState->ballVelocity.y += (gameState->ballVelocity.y > 0) ? BALL_ACCELERATION : -BALL_ACCELERATION;
+        if (gameState->gameMode == ai) calc_ai_move(gameState);
     }
     if (CheckCollisionRecs(gameState->ball.rec, gameState->racketRight.rec)) {
         gameState->ball.rec.x = gameState->windowWidth - RACKET_WIDTH - BALL_SIZE;
         gameState->ballVelocity.x += BALL_ACCELERATION;
         gameState->ballVelocity.x *= -1;
         gameState->ballVelocity.y += (gameState->ballVelocity.y > 0) ? BALL_ACCELERATION : -BALL_ACCELERATION;
-        gameState-> isPaused = true;
+        if (gameState->gameMode == ai) gameState->predictedBallY = gameState->windowHeight / 2 - RACKET_HEIGHT / 2;
     }
 }
 
@@ -294,7 +320,6 @@ int main() {
                 break;
 
             case(ai):
-                // TODO
                 SetExitKey(KEY_NULL);
                 if (gameState.isPaused) {
                     if (IsKeyPressed(KEY_ESCAPE)) {
@@ -307,12 +332,6 @@ int main() {
                     continue;
                 }
 
-                // TODO
-                // BeginDrawing();
-                // ClearBackground(BLACK);
-                // DrawText("Work in progress", gameState.windowWidth / 2 - MeasureText("Work in progress", 60) / 2, gameState.windowHeight / 2 - 50, 60, RAYWHITE);
-                // EndDrawing();
-                //
                 // Game process
 
                 double delta_a = GetFrameTime();
