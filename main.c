@@ -117,32 +117,6 @@ void handle_window_resize(GameState* gameState) {
     gameState->ball.rec.y = gameState->initBallY;
 }
 
-void draw_game_state(const GameState* gameState) {
-    ClearBackground(BLACK);
-
-    DrawLine(gameState->windowWidth / 2, 0, gameState->windowWidth / 2, gameState->windowHeight, GRAY);
-    DrawText(TextFormat("%i", gameState->scoreLeft), gameState->windowWidth / 2 - 50 - MeasureText(TextFormat("%i", gameState->scoreLeft), 40) / 2, 50, 40, RAYWHITE);
-    DrawText(TextFormat("%i", gameState->scoreRight), gameState->windowWidth / 2 + 50 - MeasureText(TextFormat("%i", gameState->scoreRight), 40) / 2, 50, 40, RAYWHITE);
-
-    DrawRectangleRec(gameState->racketLeft.rec, gameState->racketLeft.color);
-    DrawRectangleRec(gameState->racketRight.rec, gameState->racketRight.color);
-    DrawRectangleRec(gameState->ball.rec, gameState->ball.color);
-}
-
-void render_pause_menu(GameState* gameState) {
-    if (IsKeyDown(KEY_SPACE)) {
-        gameState->isPaused = false;
-        return;
-    }
-    BeginDrawing();
-
-    draw_game_state(gameState);
-
-    DrawText("Press SPACE to play", gameState->windowWidth / 2 - MeasureText("Press SPACE to play", 20) / 2, 5, 20, RAYWHITE);
-
-    EndDrawing();
-}
-
 void handle_player_input(GameState* gameState, float delta) {
     // Left Racket
     if (IsKeyDown('S')) gameState->racketLeft.rec.y += RACKET_SPEED * delta;
@@ -160,8 +134,10 @@ void handle_player_input(GameState* gameState, float delta) {
 void handle_ai_move(GameState* gameState, float delta) {
     float racket_center = gameState->racketRight.rec.y + RACKET_HEIGHT / 2;
 
-    if (racket_center < gameState->predictedBallY) gameState->racketRight.rec.y += RACKET_SPEED * delta;
-    if (racket_center > gameState->predictedBallY) gameState->racketRight.rec.y -= RACKET_SPEED * delta;
+    if (fabsf(racket_center - gameState->predictedBallY) >= 5) {
+        if (racket_center < gameState->predictedBallY) gameState->racketRight.rec.y += RACKET_SPEED * delta;
+        if (racket_center > gameState->predictedBallY) gameState->racketRight.rec.y -= RACKET_SPEED * delta;
+    }
 
     gameState->racketRight.rec.y = Clamp(gameState->racketRight.rec.y, 0, gameState->windowHeight - RACKET_HEIGHT);
 }
@@ -250,6 +226,35 @@ void reset_game(GameState* gameState) {
 void reset_score(GameState* gameState) {
     gameState->scoreLeft = 0;
     gameState->scoreRight = 0;
+}
+
+void draw_game_state(const GameState* gameState) {
+    ClearBackground(BLACK);
+
+    DrawLine(gameState->windowWidth / 2, 0, gameState->windowWidth / 2, gameState->windowHeight, GRAY);
+    DrawText(TextFormat("%i", gameState->scoreLeft), gameState->windowWidth / 2 - 50 - MeasureText(TextFormat("%i", gameState->scoreLeft), 40) / 2, 50, 40, RAYWHITE);
+    DrawText(TextFormat("%i", gameState->scoreRight), gameState->windowWidth / 2 + 50 - MeasureText(TextFormat("%i", gameState->scoreRight), 40) / 2, 50, 40, RAYWHITE);
+
+    DrawRectangleRec(gameState->racketLeft.rec, gameState->racketLeft.color);
+    DrawRectangleRec(gameState->racketRight.rec, gameState->racketRight.color);
+    DrawRectangleRec(gameState->ball.rec, gameState->ball.color);
+}
+
+void render_pause_menu(GameState* gameState) {
+    if (IsKeyDown(KEY_SPACE)) {
+        gameState->isPaused = false;
+        if (gameState->gameMode == ai && gameState->ballVelocity.x > 0) {
+            calc_ai_move(gameState);
+        }
+        return;
+    }
+    BeginDrawing();
+
+    draw_game_state(gameState);
+
+    DrawText("Press SPACE to play", gameState->windowWidth / 2 - MeasureText("Press SPACE to play", 20) / 2, 5, 20, RAYWHITE);
+
+    EndDrawing();
 }
 
 void render_game(const GameState* gameState) {
