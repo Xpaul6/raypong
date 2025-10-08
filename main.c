@@ -232,8 +232,8 @@ void draw_game_state(const GameState* gameState) {
     ClearBackground(BLACK);
 
     DrawLine(gameState->windowWidth / 2, 0, gameState->windowWidth / 2, gameState->windowHeight, GRAY);
-    DrawText(TextFormat("%i", gameState->scoreLeft), gameState->windowWidth / 2 - 50 - MeasureText(TextFormat("%i", gameState->scoreLeft), 40) / 2, 50, 40, RAYWHITE);
-    DrawText(TextFormat("%i", gameState->scoreRight), gameState->windowWidth / 2 + 50 - MeasureText(TextFormat("%i", gameState->scoreRight), 40) / 2, 50, 40, RAYWHITE);
+    DrawText(TextFormat("%i", gameState->scoreLeft), gameState->windowWidth / 2 - 50 - MeasureText(TextFormat("%i", gameState->scoreLeft), 40) / 2, 50, 40, gameState->racketLeft.color);
+    DrawText(TextFormat("%i", gameState->scoreRight), gameState->windowWidth / 2 + 50 - MeasureText(TextFormat("%i", gameState->scoreRight), 40) / 2, 50, 40, gameState->racketRight.color);
 
     DrawRectangleRec(gameState->racketLeft.rec, gameState->racketLeft.color);
     DrawRectangleRec(gameState->racketRight.rec, gameState->racketRight.color);
@@ -282,6 +282,8 @@ void render_main_menu(GameState* gameState) {
             hoveredRecIndex = i;
             if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
                 gameState->gameMode = GAME_MODES[i];
+                if (GAME_MODES[i] == ai) gameState->racketRight.color = SKYBLUE;
+                else gameState->racketRight.color = RAYWHITE;
             }
         }
     }
@@ -293,8 +295,8 @@ void render_main_menu(GameState* gameState) {
     DrawText("raypong", centerX - MeasureText("raypong", headerSize) / 2, centerY - 200, headerSize, RAYWHITE);
 
     for (int i = 0; i < NUM_MODES; i++) {
-        DrawRectangleLinesEx(gameState->menuRecs[i], 2.0f, i == hoveredRecIndex ? BLUE : RAYWHITE);
-        DrawText(MODE_NAMES[i], centerX - MeasureText(MODE_NAMES[i], textSize) / 2, centerY - 50 + i *80 + 15, textSize, i == hoveredRecIndex ? BLUE : RAYWHITE);
+        DrawRectangleLinesEx(gameState->menuRecs[i], 2.0f, i == hoveredRecIndex ? SKYBLUE : RAYWHITE);
+        DrawText(MODE_NAMES[i], centerX - MeasureText(MODE_NAMES[i], textSize) / 2, centerY - 50 + i *80 + 15, textSize, i == hoveredRecIndex ? SKYBLUE : RAYWHITE);
     }
 
     EndDrawing();
