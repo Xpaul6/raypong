@@ -49,6 +49,7 @@ typedef struct GameState {
     Object racketRight;
     Object ball;
     int predictedBallY;
+    int aiPrecision;
 } GameState;
 
 // Functions
@@ -70,6 +71,7 @@ GameState init_game_state() {
         .isPaused = true,
         .gameMode = unselected,
         .menuRecs = {0},
+        .aiPrecision = 5,
     };
     gameState.predictedBallY = gameState.windowHeight / 2 - RACKET_HEIGHT / 2;
     gameState.initRacketLeftY = gameState.windowHeight / 2 - RACKET_HEIGHT / 2;
@@ -134,7 +136,7 @@ void handle_player_input(GameState* gameState, float delta) {
 void handle_ai_move(GameState* gameState, float delta) {
     float racket_center = gameState->racketRight.rec.y + RACKET_HEIGHT / 2;
 
-    if (fabsf(racket_center - gameState->predictedBallY) >= 5) {
+    if (fabsf(racket_center - gameState->predictedBallY) >= gameState->aiPrecision) {
         if (racket_center < gameState->predictedBallY) gameState->racketRight.rec.y += RACKET_SPEED * delta;
         if (racket_center > gameState->predictedBallY) gameState->racketRight.rec.y -= RACKET_SPEED * delta;
     }
@@ -144,7 +146,7 @@ void handle_ai_move(GameState* gameState, float delta) {
 
 void calc_ai_move(GameState* gameState) {
     float distanceX = gameState->racketRight.rec.x - gameState->ball.rec.x;
-    float timeToRacket = fabsf(distanceX / gameState->ballVelocity.x);
+    float timeToRacket = distanceX / gameState->ballVelocity.x;
     float remTime = timeToRacket;
     float Y = gameState->ball.rec.y;
     float Vy = gameState->ballVelocity.y;
@@ -164,6 +166,7 @@ void calc_ai_move(GameState* gameState) {
             Vy *= -1;
         }
     }
+    gameState->aiPrecision = GetRandomValue(3, RACKET_HEIGHT - RACKET_HEIGHT / 8);
 }
 
 void calc_ball_move(GameState* gameState, float delta) {
