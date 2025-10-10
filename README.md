@@ -10,6 +10,7 @@ suggestions will be appreciated.
 Compile and run the game with `make run` command. **Warning**: compilation on windows is untested and unstable.
 
 ## Screenshot
+<img width="820" height="651" alt="image" src="https://github.com/user-attachments/assets/82d59a01-ff33-4959-9901-49c0aee2f16f" />
 <img width="867" alt="изображение" src="https://github.com/user-attachments/assets/e4f25ffb-cf0e-480e-9127-e62dba507420" />
 
 ## ToDo
