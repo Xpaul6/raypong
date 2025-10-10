@@ -329,6 +329,7 @@ int main() {
                 render_main_menu(&gameState);
                 break;
 
+            case(normal):
             case(ai):
                 SetExitKey(KEY_NULL);
                 if (gameState.isPaused) {
@@ -348,44 +349,10 @@ int main() {
 
                 // Player input        
                 handle_player_input(&gameState, delta_a);
-                handle_ai_move(&gameState, delta_a);
+                if (gameState.gameMode == ai) handle_ai_move(&gameState, delta_a);
 
                 // Calculations
                 calc_ball_move(&gameState, delta_a);
-                calc_ball_screen_collision(&gameState);
-                calc_ball_racket_collision(&gameState);
-                check_scoring(&gameState);
-
-                if (gameState.isGoal) {
-                    reset_game(&gameState);
-                }
-
-                // Render
-                render_game(&gameState);
-                break;
-
-            case(normal):
-                SetExitKey(KEY_NULL);
-                if (gameState.isPaused) {
-                    if (IsKeyPressed(KEY_ESCAPE)) {
-                        gameState.gameMode = unselected;
-                        reset_game(&gameState);
-                        reset_score(&gameState);
-                    }
-
-                    render_pause_menu(&gameState);
-                    continue;
-                }
-
-                // Game process
-
-                double delta_n = GetFrameTime();
-
-                // Player input        
-                handle_player_input(&gameState, delta_n);
-
-                // Calculations
-                calc_ball_move(&gameState, delta_n);
                 calc_ball_screen_collision(&gameState);
                 calc_ball_racket_collision(&gameState);
                 check_scoring(&gameState);
